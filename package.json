@@ -1,0 +1,36 @@
+{
+  "name": "wall-of-frames",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AvaZone Wall of Frames \u2014 internal recognition platform",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "vercel-build": "node scripts/prepare-db.mjs && next build",
+    "start": "next start",
+    "db:push": "drizzle-kit push",
+    "setup": "node scripts/init-env.mjs && drizzle-kit push --force && tsx db/seed.js",
+    "db:reset": "tsx db/seed.js",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@fontsource/outfit": "^5.3.0",
+    "@libsql/client": "^0.18.0",
+    "bcryptjs": "^3.0.3",
+    "drizzle-orm": "^0.45.4",
+    "jose": "^6.2.12",
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.11",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15"
+  },
+  "engines": {
+    "node": ">=20.12"
+  }
+}
