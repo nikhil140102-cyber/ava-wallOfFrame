@@ -1,5 +1,7 @@
 import "@fontsource/outfit/600.css";
 import "@fontsource/outfit/700.css";
+import "@fontsource/caveat/500.css";
+import "@fontsource/caveat/700.css";
 import "./globals.css";
 import "./shell.css";
 import "./pages.css";

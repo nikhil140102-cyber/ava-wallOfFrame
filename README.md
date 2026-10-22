@@ -135,6 +135,37 @@ Appreciations and announcements can carry **up to 4 photos**. Tap **Add photos**
 - Photos are stored in the database (they are small after resizing), so the app needs no disk and runs on Vercel.
 - Undoing or deleting a post deletes its photos. Uploads that are never posted are cleaned up after a day.
 
+## Memory Wall (a year in polaroids)
+
+**Memory Wall** (in the sidebar, and a button on every profile) shows each person's year as polaroids hanging from strings, one string per month.
+
+**Pinned automatically**, collected from what already happened, so nothing is entered twice:
+
+| Moment | Comes from |
+|---|---|
+| Thank-you | Appreciations they received (with the post's photo if it has one) |
+| Badge | Badges awarded to them |
+| Level up | The day their lifetime points crossed Silver, Gold or Platinum |
+| Birthday · Work anniversary · Joined | Automatic bonuses and their joining date |
+| Reward · Bonus points | Approved rewards and Super Admin bonuses (visible only to them and HR) |
+| Shared a moment | Their own milestone or announcement posts with photos |
+
+**Pinned by people:** use **Pin a Moment** to add a *Skill learned*, *Certification*, *Achievement* or *Moment*, with an optional photo and date. It can be shared in the feed so colleagues can applaud, or kept as *Only me*.
+
+- Managers can pin moments for their direct reports, and HR and the Super Admin can pin for anyone. The person gets a notification.
+- **Everyone** shows the company's highlights: badges, level-ups, skills, certifications, achievements, anniversaries and photo moments.
+- Switch the year to look back. Each year stays as a memory.
+- Pinned moments live in the `memories` table. Everything else is worked out live from existing data, so an undone thank-you also disappears from the wall.
+
+### On this day (yearly memories)
+
+Like Facebook Memories: on any date with moments from earlier years, the app reminds you.
+
+- **Notification**, once a day: "🕰️ You have 3 memories from 1 year ago today". People with several years get "2 years of this day".
+- **On this day card** on Home and at the top of your Memory Wall, with tabs for 1 year ago, 2 years ago and so on. Tap a polaroid to choose it, then **Share Memory** to post it to the feed again with its photo, or open that year's wall. **×** hides the card for the rest of the day.
+- **Year in review:** on 31 December everyone gets "Your {year} in frames is complete".
+- Reminders run on the first visit of the day, together with the birthday and anniversary points (`lib/memories.js → sendMemoryReminders`).
+
 ## Badge Studio (create new badges)
 
 HR Admins and Super Admins (anyone with the **Manage badges** permission) can create badges at any time in **Admin → Badge Studio**:
@@ -219,7 +250,7 @@ All components are `.jsx`, everything else `.js`. The `@/` import alias is set i
 ```
 app/
   (app)/                 signed-in area (layout loads the shell data once)
-    home/ people/ posts/ badges/ rewards/ leaderboard/ notifications/ settings/
+    home/ people/ posts/ badges/ rewards/ leaderboard/ notifications/ settings/ wall/
     team/                needs team.view
     admin/               overview, users, roles, levels, badges, points (Points Rules), rewards, moderation, settings, audit
   api/uploads/[id]/      serves post photos to signed-in people
@@ -241,6 +272,7 @@ lib/
   queries.js, analytics.js
   help.js                plain-language help text for every page
   autopoints.js          birthday, anniversary and welcome bonuses
+  memories.js            builds the Memory Wall from activity plus pinned moments
   uploads.js             saving, attaching and cleaning up post photos (stored in the database)
 ```
 
@@ -250,4 +282,3 @@ lib/
 - Every page checks permissions on the server (`requirePermission`), and so does every server action (`assertPermission`). Hiding a button in the UI is never the only protection.
 - Input is validated with zod on the server.
 - Deactivated users can't sign in, and their existing sessions stop working on the next request.
-"# ava-wallOfFrame" 

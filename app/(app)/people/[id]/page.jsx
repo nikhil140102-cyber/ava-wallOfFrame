@@ -87,6 +87,9 @@ export default async function ProfilePage({ params }) {
             </p>
           </div>
           <div className="row" style={{ gap: 8 }}>
+            <Link href={isMe ? "/wall" : `/wall?u=${u.id}`} className="btn">
+              <Icon name="image" size={15} /> Memory Wall
+            </Link>
             {isMe ? (
               <Link href="/settings" className="btn">
                 <Icon name="pencil" size={15} /> Edit Profile

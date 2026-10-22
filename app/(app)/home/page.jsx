@@ -13,6 +13,8 @@ import { PageHelp } from "@/components/PageHelp";
 import { and, eq, sql } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 import { getActivity } from "@/lib/analytics";
+import { getOnThisDay } from "@/lib/memories";
+import { OnThisDay } from "@/components/OnThisDay";
 
 export const metadata = { title: "Home" };
 
@@ -121,12 +123,13 @@ export default async function HomePage({ searchParams }) {
   const user = await requireUser();
   const { filter } = await searchParams;
   const mine = filter === "me";
-  const [feed, top, celebrations, steps, tasks] = await Promise.all([
+  const [feed, top, celebrations, steps, tasks, onThisDay] = await Promise.all([
     getFeed(user.id, mine ? { aboutUserId: user.id } : {}),
     getLeaderboard(30),
     getUpcomingCelebrations(),
     onboardingSteps(user.id, user.bio),
     tasksFor(user),
+    getOnThisDay({ userId: user.id, viewer: user }),
   ]);
   const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" });
 
@@ -155,6 +158,7 @@ export default async function HomePage({ searchParams }) {
       <div className="grid-2">
         <div className="stack">
           <GettingStarted steps={steps} />
+          <OnThisDay groups={onThisDay} />
           <HomeComposer />
           {feed.length === 0 ? (
             <div className="card empty">

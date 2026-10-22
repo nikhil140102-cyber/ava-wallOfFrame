@@ -2,7 +2,7 @@
   "name": "wall-of-frames",
   "version": "1.0.0",
   "private": true,
-  "description": "AvaZone Wall of Frames \u2014 internal recognition platform",
+  "description": "AvaZone Wall of Frames — internal recognition platform",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,6 +14,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@fontsource/caveat": "^5.3.0",
     "@fontsource/outfit": "^5.3.0",
     "@libsql/client": "^0.18.0",
     "bcryptjs": "^3.0.3",

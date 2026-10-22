@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { getGivenThisMonth, getLevels, getPeopleLite, getPoints, getSettings, getUnreadCount, levelFor } from "@/lib/queries";
 import { AppShell } from "@/components/shell/AppShell";
 import { runDailyAutoPoints } from "@/lib/autopoints";
+import { sendMemoryReminders } from "@/lib/memories";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,8 @@ export default async function AppLayout({ children }) {
   const user = await requireUser();
   // Birthdays and work anniversaries: the first visit of the day hands out today's automatic points.
   await runDailyAutoPoints();
+  // “On this day” memory reminders (once a day for everyone).
+  await sendMemoryReminders();
   const [settings, levels, points, used, unread, people, values, badges] = await Promise.all([
     getSettings(),
     getLevels(),

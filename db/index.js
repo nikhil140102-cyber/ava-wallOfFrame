@@ -1,4 +1,5 @@
 import { drizzle } from "drizzle-orm/libsql";
+import fs from "node:fs";
 import * as schema from "./schema";
 
 // Local development: a SQLite file (file:./data/app.db).
@@ -12,6 +13,9 @@ if (isFile && process.env.VERCEL) {
       "DATABASE_URL (libsql://…) and DATABASE_AUTH_TOKEN in Vercel → Project → Settings → Environment Variables, then redeploy."
   );
 }
+
+// A fresh checkout has no data/ folder yet — create it so the local SQLite file can be opened.
+if (isFile) fs.mkdirSync("data", { recursive: true });
 
 // The network-only client has no native binary, so it runs anywhere (Vercel, edge, serverless).
 // The full client (with the native SQLite engine) is only loaded for local file databases.

@@ -31,6 +31,7 @@ export function Sidebar({ open, onClose }) {
     { href: "/badges", label: "Badges", icon: "award" },
     { href: "/rewards", label: "Rewards", icon: "gift" },
     { href: "/leaderboard", label: "Leaderboard", icon: "trophy" },
+    { href: "/wall", label: "Memory Wall", icon: "image" },
   ];
   const team = [{ href: "/team", label: "My Team", icon: "users", perm: "team.view" }];
   const admin = [

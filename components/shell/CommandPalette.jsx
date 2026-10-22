@@ -34,6 +34,7 @@ export function CommandPalette() {
       ["Badges", "/badges", "award"],
       ["Rewards", "/rewards", "gift"],
       ["Leaderboard", "/leaderboard", "trophy"],
+      ["Memory Wall", "/wall", "image"],
       ["My Team", "/team", "users", "team.view"],
       ["Admin Overview", "/admin", "chart", "analytics.view"],
       ["Users", "/admin/users", "personPlus", "users.manage"],

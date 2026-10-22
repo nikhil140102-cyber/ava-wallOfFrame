@@ -23,6 +23,7 @@ const uid = () => crypto.randomUUID();
 async function main() {
   // Clear in dependency order so the seed can be re-run.
   for (const t of [
+    s.memories,
     s.auditLogs,
     s.reports,
     s.notifications,
@@ -434,7 +435,7 @@ async function main() {
   // ---------- Activity ----------
   async function appreciate(from, to, value, body, points, daysAgo, opts = {}) {
     const postId = uid();
-    const at = ago(daysAgo, Math.floor(Math.random() * 8));
+    const at = opts.at ?? ago(daysAgo, Math.floor(Math.random() * 8));
     await db.insert(s.posts).values({
       id: postId,
       authorId: u[from],
@@ -481,6 +482,13 @@ async function main() {
     "campus-day": [1600, 1000],
     "client-slide": [1600, 900],
     "deal-signed": [1600, 1000],
+    certificate: [1000, 1000],
+    "meetup-talk": [1000, 1000],
+    hackathon: [1000, 1000],
+    offsite: [1000, 1000],
+    "figma-tokens": [1000, 1000],
+    prototype: [1000, 1000],
+    "welcome-week": [1000, 1000],
   };
   async function photos(postId, uploader, names) {
     for (const [position, name] of names.entries()) {
@@ -657,6 +665,120 @@ async function main() {
   await photos(pCi, "meera", ["ci-green"]);
   await photos(pCampus, "priya", ["campus-day"]);
   await photos(pClient, "syed", ["client-slide", "deal-signed"]);
+
+  // ---------- Memory Wall: moments people pinned themselves ----------
+  // (Badges, thank-yous, level-ups, birthdays and anniversaries appear on the wall automatically.)
+  async function pin(who, kind, title, detail, daysAgo, imageName, at) {
+    const id = uid();
+    let imageId = null;
+    if (imageName) {
+      imageId = uid();
+      const data = fs.readFileSync(path.join("db", "seed-images", `${imageName}.jpg`));
+      const [width, height] = SIZES[imageName];
+      await db.insert(s.postImages).values({
+        id: imageId,
+        memoryId: id,
+        uploaderId: u[who],
+        fileName: `${imageId}.jpg`,
+        mime: "image/jpeg",
+        data,
+        width,
+        height,
+        size: data.length,
+      });
+    }
+    await db
+      .insert(s.memories)
+      .values({ id, userId: u[who], kind, title, detail, imageId, occurredAt: at ?? ago(daysAgo, 2), createdById: u[who] });
+  }
+  await pin(
+    "kannha",
+    "skill",
+    "Prototyping in code (React)",
+    "Rebuilt our onboarding prototype in React so usability tests felt real.",
+    230,
+    "prototype"
+  );
+  await pin("kannha", "moment", "Team offsite in Coorg", "Sunrise trek with the design team. Best two days of the year.", 150, "offsite");
+  await pin(
+    "kannha",
+    "skill",
+    "Figma variables & modes",
+    "Moved the design system to variables — light and dark themes from one file.",
+    25,
+    "figma-tokens"
+  );
+  await pin(
+    "kannha",
+    "achievement",
+    "Led my first client presentation",
+    "Walked the client through the redesign — they signed off in the room.",
+    2
+  );
+  await pin(
+    "riya",
+    "certification",
+    "Advanced Accessibility · WCAG 2.2",
+    "Six-week course; already using it in our audits.",
+    18,
+    "certificate"
+  );
+  await pin("syed", "achievement", "Spoke at a design meetup", "“Design QA at scale” — 120 people, great questions.", 14, "meetup-talk");
+  await pin("nisha", "achievement", "Won Hack Day", "Smart retry queue for payments, built in 36 hours with Dev.", 40, "hackathon");
+  await pin("dev", "skill", "Rust basics", "Finished the ownership chapter and rewrote a CLI tool.", 9);
+  await pin("meera", "certification", "Cloud architecture certification", "Passed on the first attempt.", 60);
+  // ---------- “On this day”: moments from exactly one and two years ago today ----------
+  const sameDay = (yearsBack) => {
+    const d = new Date();
+    return new Date(d.getFullYear() - yearsBack, d.getMonth(), d.getDate(), 12);
+  };
+  await pin(
+    "kannha",
+    "moment",
+    "My first week at AvadheshCo",
+    "Welcome kit, a desk plant and the best coffee machine in Bengaluru.",
+    0,
+    "welcome-week",
+    sameDay(1)
+  );
+  await pin(
+    "kannha",
+    "skill",
+    "Our design system, inside out",
+    "Built my first screen entirely from library components.",
+    0,
+    null,
+    sameDay(1)
+  );
+  await appreciate(
+    "syed",
+    ["kannha"],
+    "Teamwork",
+    "Two weeks in and your first design critique was already spot on. So glad you joined us!",
+    20,
+    0,
+    { at: sameDay(1), reactors: ["nikhil", "riya"] }
+  );
+  await pin(
+    "nikhil",
+    "achievement",
+    "Kicked off Wall of Frames in Figma",
+    "First sketches of a place where good work gets seen.",
+    0,
+    "affinity-map",
+    sameDay(1)
+  );
+  await pin("nikhil", "achievement", "Set up the Product & Design team", "Three of us and a whiteboard.", 0, null, sameDay(2));
+
+  // Kannha's first work anniversary was paid automatically a couple of weeks ago.
+  await db.insert(s.pointLedger).values({
+    userId: u["kannha"],
+    delta: 100,
+    reason: "auto",
+    refId: `auto:anniversary:${new Date().getFullYear()}:${u["kannha"]}`,
+    note: "1-year work anniversary",
+    createdAt: ago(15),
+  });
 
   // ---------- Redemptions ----------
   const rewardRows = await db.select().from(s.rewards);

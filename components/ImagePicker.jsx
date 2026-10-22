@@ -34,7 +34,7 @@ async function prepare(file) {
  * Add up to four photos. Value is a list of { id, url, width, height } for uploaded photos.
  * Parent components can call ref.addFiles(files) — used for paste and drag-and-drop on the whole sheet.
  */
-export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, onError, compact = false }, ref) {
+export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, onError, compact = false, max = MAX_PHOTOS }, ref) {
   const input = useRef(null);
   const [busy, setBusy] = useState(0);
   const latest = useRef(value);
@@ -43,8 +43,8 @@ export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, on
   async function addFiles(list) {
     const files = [...list].filter((f) => f.type.startsWith("image/"));
     if (!files.length) return;
-    const room = MAX_PHOTOS - latest.current.length - busy;
-    if (room <= 0) return onError?.(`You can add up to ${MAX_PHOTOS} photos.`);
+    const room = max - latest.current.length - busy;
+    if (room <= 0) return onError?.(max === 1 ? "One photo per moment." : `You can add up to ${max} photos.`);
     if (files.length > room) onError?.(`Only ${room} more ${room === 1 ? "photo fits" : "photos fit"} — added the first ${room}.`);
     for (const f of files.slice(0, room)) {
       if (!TYPES.includes(f.type)) {
@@ -84,7 +84,7 @@ export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, on
     onChange(next);
   }
 
-  const full = value.length + busy >= MAX_PHOTOS;
+  const full = value.length + busy >= max;
 
   return (
     <div className="photo-picker" data-compact={compact || undefined}>
@@ -92,7 +92,7 @@ export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, on
         ref={input}
         type="file"
         accept={TYPES.join(",")}
-        multiple
+        multiple={max > 1}
         hidden
         onChange={(e) => {
           addFiles(e.target.files);
@@ -126,7 +126,7 @@ export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, on
       {!full && (
         <button type="button" className="photo-add" onClick={() => input.current?.click()}>
           <Icon name="image" size={20} />
-          <span>{value.length ? "Add more" : "Add photos"}</span>
+          <span>{value.length ? "Add more" : max === 1 ? "Add photo" : "Add photos"}</span>
         </button>
       )}
     </div>

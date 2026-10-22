@@ -141,6 +141,8 @@ export const postImages = sqliteTable(
     id: id(),
     /** Null until the post is published — an upload that is never posted is cleaned up later. */
     postId: text("post_id").references(() => posts.id, { onDelete: "cascade" }),
+    /** Set when the photo belongs to a Memory Wall moment instead of (or as well as) a post. */
+    memoryId: text("memory_id"),
     uploaderId: text("uploader_id")
       .notNull()
       .references(() => users.id),
@@ -234,7 +236,9 @@ export const notifications = sqliteTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.id),
-    kind: text("kind", { enum: ["appreciation", "comment", "badge", "reward", "nudge", "system", "reaction", "points"] }).notNull(),
+    kind: text("kind", {
+      enum: ["appreciation", "comment", "badge", "reward", "nudge", "system", "reaction", "points", "memory"],
+    }).notNull(),
     actorId: text("actor_id"),
     title: text("title").notNull(),
     link: text("link").notNull().default("/home"),
@@ -271,3 +275,28 @@ export const auditLogs = sqliteTable("audit_logs", {
   target: text("target").notNull().default(""),
   createdAt: createdAt(),
 });
+
+/**
+ * Moments people add to their Memory Wall themselves (a skill learned, a certification, an achievement).
+ * Everything else on the wall — badges, thank-yous, level-ups, birthdays, anniversaries, rewards —
+ * is collected automatically from existing activity, so it never needs to be entered twice.
+ */
+export const memories = sqliteTable(
+  "memories",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    kind: text("kind", { enum: ["skill", "certification", "achievement", "moment"] }).notNull(),
+    title: text("title").notNull(),
+    detail: text("detail").notNull().default(""),
+    imageId: text("image_id"),
+    postId: text("post_id"),
+    private: integer("private", { mode: "boolean" }).notNull().default(false),
+    occurredAt: integer("occurred_at", { mode: "timestamp_ms" }).notNull().default(now),
+    createdById: text("created_by_id").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("memories_user_idx").on(t.userId)]
+);

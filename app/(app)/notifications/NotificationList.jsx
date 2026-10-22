@@ -15,6 +15,7 @@ const KIND = {
   reward: { icon: "gift", color: "var(--orange)" },
   nudge: { icon: "hand", color: "var(--pink)" },
   points: { icon: "sparkles", color: "var(--orange)" },
+  memory: { icon: "image", color: "var(--pink)" },
   reaction: { icon: "heart", color: "var(--red)" },
   system: { icon: "bell", color: "var(--label-3)" },
 };

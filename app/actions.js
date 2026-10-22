@@ -11,7 +11,7 @@ import { createSession, destroySession } from "@/lib/session";
 import { getGivenThisMonth, getPoints, getSettings } from "@/lib/queries";
 import { isPermission, SUPER_ADMIN_ONLY } from "@/lib/permissions";
 import { grantWelcome, runDailyAutoPoints } from "@/lib/autopoints";
-import { attachImages, MAX_PER_POST, removeImagesFor, removeUpload, saveUpload } from "@/lib/uploads";
+import { attachImages, attachMemoryImage, MAX_PER_POST, removeImagesFor, removeUpload, saveUpload } from "@/lib/uploads";
 
 async function audit(actorId, action, target = "") {
   await db.insert(s.auditLogs).values({ actorId, action, target });
@@ -1033,6 +1033,145 @@ export async function discardImage(id) {
     const user = await me();
     await removeUpload(String(id), user.id);
     return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ---------------------------------------------------------------- Memory Wall
+
+const memorySchema = z.object({
+  userId: z.string().optional(),
+  kind: z.enum(["skill", "certification", "achievement", "moment"]),
+  title: z.string().trim().min(2, "Give it a short title.").max(80, "Keep the title under 80 characters."),
+  detail: z.string().trim().max(400, "Keep the note under 400 characters.").optional().default(""),
+  occurredAt: z.number().int().optional(),
+  imageId: z.string().nullable().optional(),
+  private: z.boolean().optional().default(false),
+  share: z.boolean().optional().default(false),
+});
+
+/** Who may pin a moment on someone's wall: the person, their manager, or HR / Super Admin. */
+async function canPinFor(actor, userId) {
+  if (userId === actor.id || actor.can("users.manage")) return true;
+  if (!actor.can("team.view")) return false;
+  const target = await db.select({ managerId: s.users.managerId }).from(s.users).where(eq(s.users.id, userId)).get();
+  return target?.managerId === actor.id;
+}
+
+export async function addMemory(input) {
+  try {
+    const actor = await me();
+    const d = memorySchema.parse(input);
+    const userId = d.userId || actor.id;
+    const target = await db.select({ id: s.users.id, name: s.users.name }).from(s.users).where(eq(s.users.id, userId)).get();
+    if (!target) throw new Error("Person not found.");
+    if (!(await canPinFor(actor, userId))) throw new Error("You can add moments to your own wall, or your team's if you manage them.");
+    const occurredAt = d.occurredAt ? new Date(d.occurredAt) : new Date();
+    if (occurredAt.getTime() > Date.now() + 86_400_000) throw new Error("That date is in the future.");
+    const share = d.share && !d.private;
+
+    const id = crypto.randomUUID();
+    let postId = null;
+    if (share) {
+      const lead = {
+        skill: "🎓 Learned a new skill",
+        certification: "📜 Earned a certification",
+        achievement: "🏆 Achievement unlocked",
+        moment: "📸 A moment to remember",
+      }[d.kind];
+      const who = userId === actor.id ? "" : ` — ${target.name}`;
+      postId = crypto.randomUUID();
+      await db.insert(s.posts).values({
+        id: postId,
+        authorId: actor.id,
+        kind: "milestone",
+        body: `${lead}${who}: ${d.title}${d.detail ? `\n${d.detail}` : ""}`,
+      });
+    }
+    await db.insert(s.memories).values({
+      id,
+      userId,
+      kind: d.kind,
+      title: d.title,
+      detail: d.detail,
+      imageId: d.imageId || null,
+      postId,
+      private: d.private,
+      occurredAt,
+      createdById: actor.id,
+    });
+    if (d.imageId) {
+      try {
+        await attachMemoryImage(d.imageId, id, actor.id, postId);
+      } catch (e) {
+        await db.delete(s.memories).where(eq(s.memories.id, id));
+        if (postId) await db.delete(s.posts).where(eq(s.posts.id, postId));
+        throw e;
+      }
+    }
+    if (userId !== actor.id)
+      await notify([userId], {
+        kind: "system",
+        actorId: actor.id,
+        title: `${actor.name} pinned “${d.title}” on your Memory Wall`,
+        link: "/wall",
+      });
+    revalidatePath("/", "layout");
+    return { ok: true, data: { id, postId } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteMemory(id) {
+  try {
+    const actor = await me();
+    const m = await db.select().from(s.memories).where(eq(s.memories.id, id)).get();
+    if (!m) throw new Error("That moment was already removed.");
+    if (m.userId !== actor.id && m.createdById !== actor.id && !actor.can("users.manage"))
+      throw new Error("Only the person, whoever added it, or HR can remove this.");
+    // A photo that only lived on the wall goes with it; a photo shared in the feed stays with the post.
+    await db.delete(s.postImages).where(and(eq(s.postImages.memoryId, id), sql`${s.postImages.postId} is null`));
+    await db.update(s.postImages).set({ memoryId: null }).where(eq(s.postImages.memoryId, id));
+    await db.delete(s.memories).where(eq(s.memories.id, id));
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** “On this day”: share an old memory to the feed again (its photo comes along as a copy). */
+export async function shareOnThisDay(itemId) {
+  try {
+    const user = await assertPermission("recognition.give");
+    const { getOnThisDay } = await import("@/lib/memories");
+    const groups = await getOnThisDay({ userId: user.id, viewer: user });
+    const group = groups.find((g) => g.items.some((i) => i.id === itemId));
+    const item = group?.items.find((i) => i.id === itemId);
+    if (!item) throw new Error("That memory isn't from this day any more.");
+    if (item.private) throw new Error("This memory is private — make it public before sharing.");
+    const ago = `${group.yearsAgo} year${group.yearsAgo > 1 ? "s" : ""} ago today`;
+    const postId = crypto.randomUUID();
+    await db.insert(s.posts).values({
+      id: postId,
+      authorId: user.id,
+      kind: "milestone",
+      body: `🕰️ ${ago}: ${item.title}${item.detail ? `\n“${item.detail}”` : ""}`,
+    });
+    if (item.photo) {
+      const srcId = item.photo.url.split("/").pop();
+      const img = await db.select().from(s.postImages).where(eq(s.postImages.id, srcId)).get();
+      if (img) {
+        const id = crypto.randomUUID();
+        await db
+          .insert(s.postImages)
+          .values({ ...img, id, postId, memoryId: null, uploaderId: user.id, position: 0, createdAt: new Date() });
+      }
+    }
+    revalidatePath("/", "layout");
+    return { ok: true, data: { postId } };
   } catch (e) {
     return fail(e);
   }
