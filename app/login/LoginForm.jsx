@@ -14,6 +14,13 @@ const DEMO = [
   { name: "Kannha Salooja", email: "kannha@avadhesh.co", role: "Employee", color: "#6B7280", note: "Recognise, comment, redeem" },
 ];
 
+const FRAMES = [
+  { e: "🏅", c: "#3355E6", cap: "Earned Code Crafter" },
+  { e: "🎂", c: "#DB2777", cap: "Happy birthday!" },
+  { e: "⛰️", c: "#7C3AED", cap: "Team offsite" },
+  { e: "🎓", c: "#0D9488", cap: "New skill" },
+];
+
 export function LoginForm({ demo }) {
   const [state, action, pending] = useActionState(login, null);
   const formRef = useRef(null);
@@ -28,13 +35,46 @@ export function LoginForm({ demo }) {
 
   return (
     <main className={styles.wrap}>
-      <div className={styles.panel}>
-        <div className={styles.brand}>
-          <span className="brand-mark" style={{ width: 44, height: 44, fontSize: 22, borderRadius: 12 }}>
+      <section className={styles.art} aria-hidden="true">
+        <div className={styles.artBrand}>
+          <span className="brand-mark" style={{ width: 36, height: 36, fontSize: 18, borderRadius: 9 }}>
             W
           </span>
-          <h1 className="large-title">Wall of Frames</h1>
-          <p className="secondary">Recognise great work at AvadheshCo.</p>
+          Wall of Frames
+        </div>
+        <h2 className={styles.artTitle}>Good work deserves a frame.</h2>
+        <p className={styles.artText}>
+          Say thank you in thirty seconds. Every badge, thank-you and milestone becomes part of your year on the wall.
+        </p>
+        <div className={styles.line}>
+          <svg viewBox="0 0 1000 60" preserveAspectRatio="none">
+            <path d="M0 14 Q 500 54 1000 14" />
+          </svg>
+          {FRAMES.map((f, i) => (
+            <div
+              key={f.cap}
+              className={`polaroid ${styles.pol}`}
+              style={{ "--tilt": `${[-4, 3, -2, 4][i]}deg`, "--drop": `${[8, 20, 20, 8][i]}px` }}
+            >
+              <span className="peg">
+                <i />
+              </span>
+              <span className="pol-photo">
+                <span className="art" style={{ "--c": f.c }}>
+                  <span className="art-emoji">{f.e}</span>
+                </span>
+              </span>
+              <span className="pol-cap">
+                <span className="pol-title">{f.cap}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+      <div className={styles.panel}>
+        <div className={styles.brand}>
+          <h1 className="large-title">Sign in</h1>
+          <p className="secondary">Use your AvadheshCo work email.</p>
         </div>
 
         <form ref={formRef} action={action} className={styles.form}>

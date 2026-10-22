@@ -15,6 +15,7 @@ import { db, schema as s } from "@/db";
 import { getActivity } from "@/lib/analytics";
 import { getOnThisDay } from "@/lib/memories";
 import { OnThisDay } from "@/components/OnThisDay";
+import { FrameOfTheDay, pickFrameOfTheDay } from "@/components/FrameOfTheDay";
 
 export const metadata = { title: "Home" };
 
@@ -136,10 +137,8 @@ export default async function HomePage({ searchParams }) {
   return (
     <main className="page">
       <header className="page-head">
-        <div>
-          <div className="caption" style={{ textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.04em" }}>
-            {today}
-          </div>
+        <div className="home-greet">
+          <span className="home-date">{today}</span>
           <h1 className="large-title">
             {greeting()}, {user.name.split(" ")[0]}
           </h1>
@@ -154,6 +153,8 @@ export default async function HomePage({ searchParams }) {
           </Link>
         </nav>
       </header>
+
+      {!mine && <FrameOfTheDay post={pickFrameOfTheDay(feed)} />}
 
       <div className="grid-2">
         <div className="stack">

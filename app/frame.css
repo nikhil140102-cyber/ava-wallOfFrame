@@ -1,0 +1,348 @@
+/*
+ * Wall of Frames · v2 "Framed" visual layer
+ * ------------------------------------------
+ * The app *is* the frame: an ink wall holds the navigation, and every page sits on a
+ * gallery-white canvas inset like a print, edged with a thin gold mat line.
+ * One bold idea (the frame); everything inside stays quiet.
+ *
+ *   Ink         #121A33  the wall · sidebar
+ *   Canvas      #F6F7FB  cool gallery white (pages)
+ *   Paper       #FFFFFF  cards
+ *   Signal blue #3355E6  actions (AvaZone brand)
+ *   Frame gold  #C8973A  mat line, levels, “Frame of the day”
+ *   Display     Bricolage Grotesque — headings only; body stays the system font
+ */
+
+:root {
+  --ink: #121a33;
+  --ink-2: #1a2446;
+  --ink-text: rgba(236, 239, 250, 0.86);
+  --ink-muted: rgba(236, 239, 250, 0.52);
+  --ink-line: rgba(236, 239, 250, 0.09);
+  --ink-hover: rgba(236, 239, 250, 0.07);
+  --ink-icon: #98aaff;
+  --frame-gold: #c8973a;
+  --frame-gold-soft: rgba(200, 151, 58, 0.55);
+  --bg: #f6f7fb;
+  --separator: rgba(18, 26, 51, 0.09);
+  --font-display: "Bricolage Grotesque", "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --canvas-gap: 10px;
+  --canvas-radius: 24px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #070b17;
+    --ink-2: #111832;
+    --bg: #0e1328;
+    --bg-elevated: #161d38;
+    --bg-grouped: #161d38;
+    --material-thick: rgba(22, 29, 56, 0.9);
+    --separator: rgba(160, 170, 210, 0.14);
+    --frame-gold-soft: rgba(200, 151, 58, 0.4);
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #070b17;
+  --ink-2: #111832;
+  --bg: #0e1328;
+  --bg-elevated: #161d38;
+  --bg-grouped: #161d38;
+  --material-thick: rgba(22, 29, 56, 0.9);
+  --separator: rgba(160, 170, 210, 0.14);
+  --frame-gold-soft: rgba(200, 151, 58, 0.4);
+}
+
+/* ── The frame ─────────────────────────────────────────────── */
+body {
+  background: var(--ink);
+}
+.shell {
+  background:
+    radial-gradient(900px 500px at -10% -10%, rgba(51, 85, 230, 0.22), transparent 60%),
+    radial-gradient(700px 400px at 0% 110%, rgba(200, 151, 58, 0.1), transparent 60%), var(--ink);
+}
+.main {
+  margin: var(--canvas-gap) var(--canvas-gap) var(--canvas-gap) 0;
+  min-height: calc(100vh - var(--canvas-gap) * 2);
+  background: var(--bg);
+  border-radius: var(--canvas-radius);
+  /* the gold mat line, then a soft lift off the wall */
+  box-shadow:
+    0 0 0 1px var(--frame-gold-soft),
+    0 0 0 6px rgba(255, 255, 255, 0.025),
+    0 30px 60px -30px rgba(0, 0, 0, 0.6);
+  overflow: clip;
+}
+
+/* ── Sidebar on the ink wall ───────────────────────────────── */
+.sidebar {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-right: 0;
+  padding: 18px 14px 14px;
+}
+.sidebar-brand b {
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+.sidebar-brand span {
+  color: var(--ink-muted);
+}
+/* The logo is a tiny frame: paper mat, gold edge, ink W */
+.brand-mark {
+  background: #fffdf8 !important;
+  color: var(--ink) !important;
+  box-shadow:
+    inset 0 0 0 2px #fffdf8,
+    inset 0 0 0 3px var(--frame-gold),
+    0 4px 12px rgba(0, 0, 0, 0.35) !important;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+.sidebar-search {
+  background: var(--ink-hover);
+  color: var(--ink-muted);
+  border: 1px solid var(--ink-line);
+}
+.sidebar-search kbd {
+  background: transparent;
+  color: var(--ink-muted);
+  border-color: var(--ink-line);
+}
+.sidebar-cta {
+  height: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px -8px rgba(51, 85, 230, 0.8);
+}
+.nav-label {
+  color: var(--ink-muted);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.nav-item {
+  color: var(--ink-text);
+  height: 36px;
+  border-radius: 10px;
+}
+.nav-item svg {
+  color: var(--ink-icon);
+}
+.nav-item:hover {
+  background: var(--ink-hover);
+}
+.nav-item[aria-current="page"] {
+  background: rgba(236, 239, 250, 0.11);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--frame-gold);
+}
+.nav-item[aria-current="page"] svg {
+  color: #fff;
+}
+.sidebar-me {
+  border-top-color: var(--ink-line);
+}
+.me-btn:hover {
+  background: var(--ink-hover);
+}
+.me-text b {
+  color: #fff;
+}
+.me-text > span,
+.me-btn > svg {
+  color: var(--ink-muted) !important;
+}
+.sidebar .popover {
+  color: var(--label);
+}
+
+/* ── Type: Bricolage for headings only ─────────────────────── */
+.large-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(30px, 3.4vw, 40px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+.title-1,
+.title-2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+.page-head {
+  margin-bottom: 26px;
+}
+.page-head p {
+  font-size: 15.5px;
+  max-width: 62ch;
+}
+
+/* ── Calmer surfaces: hairlines instead of stacked shadows ── */
+.card {
+  box-shadow: none;
+  border: 1px solid var(--separator);
+}
+.btn-filled {
+  box-shadow: 0 6px 16px -8px rgba(51, 85, 230, 0.7);
+}
+
+/* ── Home: greeting and Frame of the day ───────────────────── */
+.home-greet {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.home-date {
+  color: var(--label-3);
+  font-size: 14px;
+  font-weight: 500;
+}
+.fotd {
+  display: grid;
+  grid-template-columns: minmax(240px, 340px) 1fr;
+  gap: 36px;
+  align-items: center;
+  padding: 26px 32px;
+  margin-bottom: 24px;
+  border-radius: 22px;
+  background: radial-gradient(600px 300px at 100% 0%, rgba(200, 151, 58, 0.12), transparent 60%), var(--bg-elevated);
+  border: 1px solid var(--separator);
+  position: relative;
+}
+/* The print: black frame, white mat, gold hairline */
+.fotd-frame {
+  background: #1b1d22;
+  padding: 10px;
+  border-radius: 3px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 22px 40px -18px rgba(18, 26, 51, 0.55),
+    0 4px 10px rgba(18, 26, 51, 0.18);
+  transform: rotate(-1.2deg);
+}
+.fotd-mat {
+  background: #fdfcf8;
+  padding: 16px;
+  box-shadow: inset 0 0 0 1px rgba(200, 151, 58, 0.6);
+}
+.fotd-print {
+  aspect-ratio: 5 / 4;
+  overflow: hidden;
+  background: #eceae4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fotd-print img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.fotd-print .fotd-quote-art {
+  padding: 18px;
+  font-family: Caveat, cursive;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.1;
+  color: #2a2724;
+  text-align: center;
+}
+.fotd-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--frame-gold);
+  font-weight: 700;
+  font-size: 14px;
+}
+.fotd-label::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: currentColor;
+}
+.fotd blockquote {
+  margin: 10px 0 14px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(21px, 2.1vw, 28px);
+  line-height: 1.22;
+  letter-spacing: -0.015em;
+  max-width: 34ch;
+  color: var(--label);
+}
+.fotd-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--label-2);
+  font-size: 14.5px;
+  flex-wrap: wrap;
+}
+.fotd-who b {
+  color: var(--label);
+}
+.fotd-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.fotd-claps {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--label-3);
+  font-size: 13.5px;
+}
+
+/* ── Mobile: the canvas fills the screen; the frame becomes the top bar ── */
+@media (max-width: 900px) {
+  .main {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+  }
+  .mobile-bar {
+    background: var(--ink);
+    color: #fff;
+    border-bottom: 1px solid var(--frame-gold-soft);
+  }
+  .mobile-bar .icon-btn {
+    color: #fff;
+  }
+  .sidebar {
+    background: var(--ink);
+  }
+  .fotd {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 20px;
+  }
+  .fotd-frame {
+    max-width: 260px;
+    margin: 4px auto 0;
+  }
+  .fotd blockquote {
+    font-size: 20px;
+  }
+}
+/* ── Rewards: your balance hangs on the same ink wall ─────── */
+.balance-hero {
+  background:
+    radial-gradient(520px 260px at 0% 0%, rgba(51, 85, 230, 0.45), transparent 65%),
+    radial-gradient(420px 240px at 100% 100%, rgba(200, 151, 58, 0.3), transparent 65%), var(--ink) !important;
+  box-shadow: 0 0 0 1px var(--frame-gold-soft) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fotd-frame {
+    transform: none;
+  }
+}
