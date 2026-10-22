@@ -1,0 +1,16 @@
+{
+  "title": "Notifications",
+  "unreadCount_one": "{n} unread",
+  "unreadCount_other": "{n} unread",
+  "caughtUp": "You're all caught up.",
+  "filter.label": "Show",
+  "filter.all": "All",
+  "filter.unread": "Unread",
+  "markAllRead": "Mark All as Read",
+  "empty.unread": "No unread notifications",
+  "empty.all": "No notifications yet",
+  "empty.body": "Appreciations, comments, badges and reward updates will show up here.",
+  "today": "Today",
+  "earlier": "Earlier",
+  "unread": "Unread"
+}

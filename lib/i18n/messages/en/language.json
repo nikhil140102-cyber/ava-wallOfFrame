@@ -1,0 +1,8 @@
+{
+  "label": "Language",
+  "button": "Language: {language}",
+  "choose": "Choose your language",
+  "search": "Search languages",
+  "noMatch": "No language matches",
+  "list": "Languages"
+}

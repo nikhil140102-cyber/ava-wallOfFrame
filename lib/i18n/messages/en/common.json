@@ -1,0 +1,23 @@
+{
+  "cancel": "Cancel",
+  "done": "Done",
+  "save": "Save",
+  "saving": "Saving…",
+  "close": "Close",
+  "undo": "Undo",
+  "edit": "Edit",
+  "delete": "Delete",
+  "back": "Back",
+  "next": "Next",
+  "send": "Send",
+  "search": "Search",
+  "loading": "Loading",
+  "loadingEllipsis": "Loading…",
+  "somethingWrong": "Something went wrong",
+  "tryAgain": "Try again",
+  "pageNotFound": "Page not found",
+  "notFound.title": "Not found",
+  "notFound.body": "This page or post doesn't exist, or it was deleted.",
+  "backToHome": "Back to Home",
+  "helpLabel": "How this page works"
+}

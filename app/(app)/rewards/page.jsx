@@ -2,9 +2,13 @@ import { and, desc, eq } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 import { requireUser } from "@/lib/auth";
 import { getPoints } from "@/lib/queries";
+import { getI18n } from "@/lib/i18n/server";
 import { RewardStore } from "./RewardStore";
 
-export const metadata = { title: "Rewards" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t("rewards.title") };
+}
 
 export default async function RewardsPage() {
   const user = await requireUser();

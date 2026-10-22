@@ -6,12 +6,14 @@ import { Avatar } from "../Avatar";
 import { useApp } from "./AppContext";
 import { giveAppreciation, undoAppreciation } from "@/app/actions";
 import { celebrate } from "../celebrate";
-import { ImagePicker } from "../ImagePicker";
+import { ImagePicker, MAX_PHOTOS } from "../ImagePicker";
+import { useI18n } from "../I18nProvider";
 
 const MAX = 500;
 
 export function RecognizeSheet() {
   const { recognize, closeRecognize, data, can, toast } = useApp();
+  const { t, fmt } = useI18n();
   const [recipients, setRecipients] = useState([]);
   const [query, setQuery] = useState("");
   const [valueId, setValueId] = useState(null);
@@ -48,12 +50,12 @@ export function RecognizeSheet() {
 
   const byId = useMemo(() => new Map(data.people.map((p) => [p.id, p])), [data.people]);
   const matches = useMemo(() => {
-    const t = query.trim().toLowerCase();
-    if (!t) return [];
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
     return (
       data.people
         .filter((p) => !recipients.includes(p.id) && (data.allowSelf || p.id !== data.me.id))
-        .filter((p) => p.name.toLowerCase().includes(t) || p.department?.toLowerCase().includes(t))
+        .filter((p) => p.name.toLowerCase().includes(q) || p.department?.toLowerCase().includes(q))
         // First or last name starting with what was typed ranks above a match in the middle of a word.
         .sort(
           (a, b) =>
@@ -61,13 +63,13 @@ export function RecognizeSheet() {
               b.name
                 .toLowerCase()
                 .split(" ")
-                .some((w) => w.startsWith(t))
+                .some((w) => w.startsWith(q))
             ) -
             Number(
               a.name
                 .toLowerCase()
                 .split(" ")
-                .some((w) => w.startsWith(t))
+                .some((w) => w.startsWith(q))
             )
         )
         .slice(0, 5)
@@ -91,13 +93,14 @@ export function RecognizeSheet() {
       if (!res.ok) return setError(res.error);
       closeRecognize();
       celebrate();
-      const names = recipients.map((id) => byId.get(id)?.name.split(" ")[0]).join(" & ");
-      toast(`Appreciation sent to ${names}`, {
+      const firstNames = recipients.map((id) => byId.get(id)?.name.split(" ")[0]).filter(Boolean);
+      const names = fmt.list(firstNames);
+      toast(t("recognize.toast.sent", { names }), {
         action: {
-          label: "Undo",
+          label: t("recognize.toast.undo"),
           onClick: async () => {
             const u = await undoAppreciation(res.data.postId);
-            toast(u.ok ? "Appreciation removed" : u.error, { tone: u.ok ? "default" : "error" });
+            toast(u.ok ? t("recognize.toast.removed") : u.error, { tone: u.ok ? "default" : "error" });
           },
         },
       });
@@ -134,16 +137,16 @@ export function RecognizeSheet() {
       >
         {dragging && (
           <div className="drop-hint">
-            <Icon name="image" size={22} /> Drop photos to add them
+            <Icon name="image" size={22} /> {t("recognize.dropHint")}
           </div>
         )}
         <div className="sheet-head">
           <button className="btn btn-plain" onClick={closeRecognize}>
-            Cancel
+            {t("recognize.cancel")}
           </button>
-          <h2 id="rec-title">Recognize</h2>
+          <h2 id="rec-title">{t("recognize.title")}</h2>
           <button className="btn btn-plain" style={{ fontWeight: 700 }} disabled={!ready || pending} onClick={submit}>
-            {pending ? "Sending…" : "Send"}
+            {pending ? t("recognize.sending") : t("recognize.send")}
           </button>
         </div>
 
@@ -153,7 +156,7 @@ export function RecognizeSheet() {
               <span className="step-num" data-done={recipients.length > 0 || undefined}>
                 1
               </span>{" "}
-              Who are you thanking?
+              {t("recognize.step1")}
             </label>
             <div className="rec-to">
               {recipients.map((id) => {
@@ -163,7 +166,10 @@ export function RecognizeSheet() {
                   <span key={id} className="token">
                     <Avatar name={p.name} size={22} />
                     {p.name}
-                    <button aria-label={`Remove ${p.name}`} onClick={() => setRecipients(recipients.filter((r) => r !== id))}>
+                    <button
+                      aria-label={t("recognize.removePerson", { name: p.name })}
+                      onClick={() => setRecipients(recipients.filter((r) => r !== id))}
+                    >
                       <Icon name="x" size={12} stroke={2.4} />
                     </button>
                   </span>
@@ -182,7 +188,7 @@ export function RecognizeSheet() {
                   }
                   if (e.key === "Backspace" && !query && recipients.length) setRecipients(recipients.slice(0, -1));
                 }}
-                placeholder={recipients.length ? "" : "Start typing a name…"}
+                placeholder={recipients.length ? "" : t("recognize.searchPlaceholder")}
                 autoComplete="off"
               />
             </div>
@@ -217,7 +223,7 @@ export function RecognizeSheet() {
               <span className="step-num" data-done={!!valueId || undefined}>
                 2
               </span>{" "}
-              Which value did they show?
+              {t("recognize.step2")}
             </span>
             <div className="rec-values">
               {data.values.map((v) => (
@@ -234,7 +240,7 @@ export function RecognizeSheet() {
               <span className="step-num" data-done={body.trim().length >= 3 || undefined}>
                 3
               </span>{" "}
-              Say thank you
+              {t("recognize.step3")}
             </label>
             <textarea
               id="rec-msg"
@@ -244,7 +250,7 @@ export function RecognizeSheet() {
               maxLength={MAX}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="What did they do, and why did it matter?"
+              placeholder={t("recognize.messagePlaceholder")}
               onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === "Enter" && submit()}
             />
             <div className="rec-count caption">
@@ -254,22 +260,22 @@ export function RecognizeSheet() {
 
           <section>
             <span className="rec-label">
-              Add photos{" "}
+              {t("recognize.photos.label")}{" "}
               <span className="tertiary" style={{ fontWeight: 400 }}>
-                — optional, up to 4
+                {t("recognize.photos.optional", { max: MAX_PHOTOS })}
               </span>
             </span>
             <ImagePicker ref={pickerRef} value={photos} onChange={setPhotos} onError={(m) => toast(m, { tone: "error" })} />
             <p className="caption" style={{ marginTop: 6 }}>
-              Team photo, a screenshot of the work, a happy moment. You can also paste or drag photos here.
+              {t("recognize.photos.help")}
             </p>
           </section>
 
           <section>
             <span className="rec-label">
-              Add a badge{" "}
+              {t("recognize.badge.label")}{" "}
               <span className="tertiary" style={{ fontWeight: 400 }}>
-                — optional
+                {t("recognize.badge.optional")}
               </span>
             </span>
             <div className="rec-badges">
@@ -296,12 +302,15 @@ export function RecognizeSheet() {
               </span>
               <div style={{ flex: 1 }}>
                 <span className="rec-label" style={{ marginBottom: 2 }}>
-                  +{points} points{recipients.length > 1 ? " each" : ""}, given automatically
+                  {t(recipients.length > 1 ? "recognize.points.autoEach" : "recognize.points.auto", {
+                    count: points,
+                    points: fmt.num(points),
+                  })}
                 </span>
                 <span className="caption">
                   {over
-                    ? `That's ${cost} — you have ${remaining} left to give this month`
-                    : `${Math.max(0, remaining - cost)} of ${data.budget.monthly} left to give this month · amount set by the Super Admin`}
+                    ? t("recognize.points.over", { cost: fmt.num(cost), remaining: fmt.num(remaining) })
+                    : t("recognize.points.left", { left: fmt.num(Math.max(0, remaining - cost)), total: fmt.num(data.budget.monthly) })}
                 </span>
               </div>
             </section>
@@ -317,17 +326,17 @@ export function RecognizeSheet() {
         <div className="sheet-foot">
           <span className="caption" style={{ flex: 1 }} aria-live="polite">
             {!recipients.length
-              ? "Step 1: choose who you're thanking"
+              ? t("recognize.hint.step1")
               : !valueId
-                ? "Step 2: pick a value"
+                ? t("recognize.hint.step2")
                 : body.trim().length < 3
-                  ? "Step 3: write a short thank-you"
+                  ? t("recognize.hint.step3")
                   : over
-                    ? "You've used this month's giving budget — try fewer people"
-                    : `Ready! Everyone at ${data.companyName} will see this.`}
+                    ? t("recognize.hint.over")
+                    : t("recognize.hint.ready", { company: data.companyName })}
           </span>
           <button className="btn btn-filled" disabled={!ready || pending} onClick={submit}>
-            <Icon name="send" size={15} /> {pending ? "Sending…" : "Send Appreciation"}
+            <Icon name="send" size={15} /> {pending ? t("recognize.sending") : t("recognize.sendAppreciation")}
           </button>
         </div>
       </div>

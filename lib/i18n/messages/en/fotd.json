@@ -1,0 +1,15 @@
+{
+  "label": "Frame of the day",
+  "thanked": "{author} thanked {people}",
+  "thankedFor": "{author} thanked {people} for {value}",
+  "quote": "“{quote}”",
+  "thankYou": "Thank you, {names}!",
+  "photoAlt": "Photo shared with the thank-you to {names}",
+  "openPost": "Open the post",
+  "thankToo": "Thank someone too",
+  "applauded_one": "{count} applauded",
+  "applauded_other": "{count} applauded",
+  "two": "{a} and {b}",
+  "andOthers_one": "{a} and {count} other",
+  "andOthers_other": "{a} and {count} others"
+}

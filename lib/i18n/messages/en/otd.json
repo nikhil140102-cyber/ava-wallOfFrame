@@ -1,0 +1,13 @@
+{
+  "title": "On this day",
+  "yearsAgo_one": "{count} year ago",
+  "yearsAgo_other": "{count} years ago",
+  "yearsAgoToday_one": "{count} year ago today · {date}",
+  "yearsAgoToday_other": "{count} years ago today · {date}",
+  "hide": "Hide memories for today",
+  "howLongAgo": "How long ago",
+  "share": "Share Memory",
+  "sharing": "Sharing…",
+  "shared": "Memory shared to the feed",
+  "seeWall": "See your {year} wall"
+}

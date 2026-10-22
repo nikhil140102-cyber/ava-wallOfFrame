@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -10,6 +11,7 @@ import { assertPermission, getCurrentUser } from "@/lib/auth";
 import { createSession, destroySession } from "@/lib/session";
 import { getGivenThisMonth, getPoints, getSettings } from "@/lib/queries";
 import { isPermission, SUPER_ADMIN_ONLY } from "@/lib/permissions";
+import { isLocale } from "@/lib/i18n/locales";
 import { grantWelcome, runDailyAutoPoints } from "@/lib/autopoints";
 import { attachImages, attachMemoryImage, MAX_PER_POST, removeImagesFor, removeUpload, saveUpload } from "@/lib/uploads";
 
@@ -807,10 +809,22 @@ export async function updateProfile(input) {
   }
 }
 
+const prefsSchema = z
+  .object({
+    theme: z.enum(["system", "light", "dark"]).optional(),
+    emailNotifications: z.boolean().optional(),
+    locale: z.string().refine((v) => isLocale(v), "Unknown language.").optional(),
+  })
+  .strict(); // only these fields — never role, points or anything else
+
 export async function setPreferences(input) {
   try {
     const user = await me();
-    await db.update(s.users).set(input).where(eq(s.users.id, user.id));
+    const data = prefsSchema.parse(input);
+    if (Object.keys(data).length) await db.update(s.users).set(data).where(eq(s.users.id, user.id));
+    const jar = await cookies();
+    if (data.theme) jar.set("wof_theme", data.theme, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+    if (data.locale) jar.set("wof_locale", data.locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
@@ -1175,4 +1189,11 @@ export async function shareOnThisDay(itemId) {
   } catch (e) {
     return fail(e);
   }
+}
+
+/** Sign-in page language choice (before anyone is signed in). */
+export async function setGuestLocale(locale) {
+  if (!isLocale(locale)) return { ok: false, error: "Unknown language." };
+  (await cookies()).set("wof_locale", locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  return { ok: true };
 }

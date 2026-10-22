@@ -1,0 +1,12 @@
+{
+  "title": "People",
+  "countCompany_one": "{n} person across the company",
+  "countCompany_other": "{n} people across the company",
+  "countDept_one": "{n} person in {dept}",
+  "countDept_other": "{n} people in {dept}",
+  "searchPlaceholder": "Search name or title",
+  "searchLabel": "Search people",
+  "all": "All",
+  "empty.title": "No one found",
+  "empty.body": "Try a different name, or clear the department filter."
+}

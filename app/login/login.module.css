@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(380px, 1fr);
-  background: var(--ink);
+  background: var(--wall);
 }
 /* Left: the wall */
 .art {
@@ -11,11 +11,12 @@
   padding: 48px 56px;
   display: flex;
   flex-direction: column;
-  color: #fff;
-  --string: #b9a98f;
+  color: var(--wall-strong);
+  --string: #a8977c;
   background:
-    radial-gradient(900px 500px at -10% -10%, rgba(51, 85, 230, 0.35), transparent 60%),
-    radial-gradient(700px 420px at 110% 110%, rgba(200, 151, 58, 0.22), transparent 60%), var(--ink);
+    radial-gradient(900px 500px at -10% -10%, var(--wall-glow-1), transparent 60%),
+    radial-gradient(700px 420px at 110% 110%, var(--wall-glow-2), transparent 60%),
+    var(--wall);
 }
 .artBrand {
   display: flex;
@@ -38,7 +39,7 @@
   margin-top: 18px;
   font-size: 17px;
   line-height: 1.5;
-  color: rgba(236, 239, 250, 0.72);
+  color: var(--wall-text);
   max-width: 42ch;
 }
 .line {
@@ -74,8 +75,12 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-radius: 28px 0 0 28px;
+  border-start-start-radius: 28px;
+  border-end-start-radius: 28px;
   box-shadow: -1px 0 0 var(--frame-gold-soft);
+}
+:global([dir="rtl"]) .panel {
+  box-shadow: 1px 0 0 var(--frame-gold-soft);
 }
 .panel > * {
   width: 100%;
@@ -151,6 +156,8 @@
   }
   .panel {
     border-radius: 24px 24px 0 0;
+    border-start-start-radius: 24px;
+    border-end-start-radius: 0;
     box-shadow: 0 -1px 0 var(--frame-gold-soft);
     padding: 32px 20px 40px;
   }

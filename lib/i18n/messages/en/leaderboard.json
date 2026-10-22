@@ -1,0 +1,14 @@
+{
+  "title": "Leaderboard",
+  "sub": "Points received from appreciations and badges.",
+  "subRank": "Points received from appreciations and badges · You're #{rank}.",
+  "period": "Period",
+  "period.week": "This Week",
+  "period.month": "30 Days",
+  "period.all": "All Time",
+  "wholeCompany": "Whole company",
+  "empty.title": "No points yet",
+  "empty.body": "Nobody has received points in this period. Recognition you give shows up here.",
+  "pts": "{points} pts",
+  "you": "You"
+}

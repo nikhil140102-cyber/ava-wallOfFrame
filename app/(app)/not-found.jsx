@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { getI18n } from "@/lib/i18n/server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const { t } = await getI18n();
   return (
     <main className="page page-narrow">
       <div className="card empty">
         <span className="empty-icon">
           <Icon name="search" size={26} />
         </span>
-        <h3>Not found</h3>
-        <p>This page or post doesn&apos;t exist, or it was deleted.</p>
+        <h3>{t("common.notFound.title")}</h3>
+        <p>{t("common.notFound.body")}</p>
         <Link href="/home" className="btn btn-tinted" style={{ marginTop: 8 }}>
-          Back to Home
+          {t("common.backToHome")}
         </Link>
       </div>
     </main>

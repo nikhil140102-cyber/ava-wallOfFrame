@@ -3,15 +3,16 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Icon } from "./Icon";
 import { discardImage, uploadImage } from "@/app/actions";
+import { useI18n } from "./I18nProvider";
 
 export const MAX_PHOTOS = 4;
 const MAX_SIDE = 1800;
 const TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 /** Shrinks big photos in the browser so uploads are quick. GIFs are left alone so they keep animating. */
-async function prepare(file) {
+async function prepare(file, t) {
   const bmp = await createImageBitmap(file).catch(() => null);
-  if (!bmp) throw new Error("That file doesn't look like a photo.");
+  if (!bmp) throw new Error(t("photos.error.notPhoto"));
   const { width, height } = bmp;
   if (file.type === "image/gif" || (Math.max(width, height) <= MAX_SIDE && file.size < 1.5 * 1024 * 1024)) {
     bmp.close?.();
@@ -35,6 +36,7 @@ async function prepare(file) {
  * Parent components can call ref.addFiles(files) — used for paste and drag-and-drop on the whole sheet.
  */
 export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, onError, compact = false, max = MAX_PHOTOS }, ref) {
+  const { t } = useI18n();
   const input = useRef(null);
   const [busy, setBusy] = useState(0);
   const latest = useRef(value);
@@ -44,16 +46,16 @@ export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, on
     const files = [...list].filter((f) => f.type.startsWith("image/"));
     if (!files.length) return;
     const room = max - latest.current.length - busy;
-    if (room <= 0) return onError?.(max === 1 ? "One photo per moment." : `You can add up to ${max} photos.`);
-    if (files.length > room) onError?.(`Only ${room} more ${room === 1 ? "photo fits" : "photos fit"} — added the first ${room}.`);
+    if (room <= 0) return onError?.(max === 1 ? t("photos.error.onePerMoment") : t("photos.error.max", { max }));
+    if (files.length > room) onError?.(t("photos.error.room", { count: room }));
     for (const f of files.slice(0, room)) {
       if (!TYPES.includes(f.type)) {
-        onError?.("Only JPG, PNG, WebP or GIF photos can be added.");
+        onError?.(t("photos.error.type"));
         continue;
       }
       setBusy((n) => n + 1);
       try {
-        const { blob, width, height } = await prepare(f);
+        const { blob, width, height } = await prepare(f, t);
         const fd = new FormData();
         fd.append("file", blob, f.name);
         fd.append("width", String(width));
@@ -62,7 +64,7 @@ export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, on
         if (!r.ok) onError?.(r.error);
         else onChange([...latest.current, r.data]);
       } catch (e) {
-        onError?.(e.message || "That photo couldn't be added.");
+        onError?.(e.message || t("photos.error.failed"));
       } finally {
         setBusy((n) => n - 1);
       }
@@ -102,16 +104,21 @@ export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, on
       {value.map((img, i) => (
         <div key={img.id} className="photo-thumb">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={img.url} alt={`Photo ${i + 1}`} />
-          <button type="button" className="photo-remove" onClick={() => remove(img)} aria-label={`Remove photo ${i + 1}`}>
+          <img src={img.url} alt={t("photos.alt", { n: i + 1 })} />
+          <button type="button" className="photo-remove" onClick={() => remove(img)} aria-label={t("photos.remove", { n: i + 1 })}>
             <Icon name="x" size={12} stroke={2.8} />
           </button>
           {value.length > 1 && (
             <span className="photo-order">
-              <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move photo ${i + 1} earlier`}>
+              <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label={t("photos.moveEarlier", { n: i + 1 })}>
                 ‹
               </button>
-              <button type="button" onClick={() => move(i, 1)} disabled={i === value.length - 1} aria-label={`Move photo ${i + 1} later`}>
+              <button
+                type="button"
+                onClick={() => move(i, 1)}
+                disabled={i === value.length - 1}
+                aria-label={t("photos.moveLater", { n: i + 1 })}
+              >
                 ›
               </button>
             </span>
@@ -119,14 +126,14 @@ export const ImagePicker = forwardRef(function ImagePicker({ value, onChange, on
         </div>
       ))}
       {Array.from({ length: busy }, (_, i) => (
-        <div key={`b${i}`} className="photo-thumb photo-loading" aria-label="Uploading photo">
+        <div key={`b${i}`} className="photo-thumb photo-loading" aria-label={t("photos.uploading")}>
           <span className="spinner" />
         </div>
       ))}
       {!full && (
         <button type="button" className="photo-add" onClick={() => input.current?.click()}>
           <Icon name="image" size={20} />
-          <span>{value.length ? "Add more" : max === 1 ? "Add photo" : "Add photos"}</span>
+          <span>{value.length ? t("photos.addMore") : max === 1 ? t("photos.addOne") : t("photos.add")}</span>
         </button>
       )}
     </div>

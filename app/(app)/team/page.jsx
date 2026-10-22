@@ -5,11 +5,16 @@ import { getActivity } from "@/lib/analytics";
 import { getLevels, getPoints, levelFor } from "@/lib/queries";
 import { TeamTable } from "./TeamTable";
 import { PageHelp } from "@/components/PageHelp";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "My Team" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t("team.title") };
+}
 
 export default async function TeamPage() {
   const user = await requirePermission("team.view");
+  const { t, fmt } = await getI18n();
   const reports = await db
     .select({ id: s.users.id, name: s.users.name, title: s.users.title, joinedAt: s.users.joinedAt, active: s.users.active })
     .from(s.users)
@@ -38,31 +43,29 @@ export default async function TeamPage() {
     <main className="page">
       <header className="page-head">
         <div>
-          <h1 className="large-title">My Team</h1>
-          <p>
-            {rows.length} direct {rows.length === 1 ? "report" : "reports"} · last 30 days
-          </p>
+          <h1 className="large-title">{t("team.title")}</h1>
+          <p>{t("team.subtitle", { count: rows.length, n: fmt.num(rows.length) })}</p>
         </div>
         <PageHelp topic="team" />
       </header>
       <div className="stat-grid" style={{ marginBottom: 24 }}>
         <div className="stat">
-          <span className="caption">Participation</span>
-          <b>{rows.length ? Math.round((participating / rows.length) * 100) : 0}%</b>
-          <span className="caption">gave or received recognition</span>
+          <span className="caption">{t("team.stat.participation")}</span>
+          <b>{t("team.stat.participationValue", { n: fmt.num(rows.length ? Math.round((participating / rows.length) * 100) : 0) })}</b>
+          <span className="caption">{t("team.stat.participationHint")}</span>
         </div>
         <div className="stat">
-          <span className="caption">Appreciations given</span>
-          <b>{rows.reduce((n, r) => n + r.given, 0)}</b>
+          <span className="caption">{t("team.stat.given")}</span>
+          <b>{fmt.num(rows.reduce((n, r) => n + r.given, 0))}</b>
         </div>
         <div className="stat">
-          <span className="caption">Appreciations received</span>
-          <b>{rows.reduce((n, r) => n + r.received, 0)}</b>
+          <span className="caption">{t("team.stat.received")}</span>
+          <b>{fmt.num(rows.reduce((n, r) => n + r.received, 0))}</b>
         </div>
         <div className="stat">
-          <span className="caption">Quiet this month</span>
-          <b style={{ color: rows.some((r) => r.quiet) ? "var(--orange)" : undefined }}>{rows.filter((r) => r.quiet).length}</b>
-          <span className="caption">haven&apos;t recognised anyone</span>
+          <span className="caption">{t("team.stat.quiet")}</span>
+          <b style={{ color: rows.some((r) => r.quiet) ? "var(--orange)" : undefined }}>{fmt.num(rows.filter((r) => r.quiet).length)}</b>
+          <span className="caption">{t("team.stat.quietHint")}</span>
         </div>
       </div>
       <TeamTable rows={rows} canNudge={user.can("team.nudge")} canAward={user.can("badges.award")} />

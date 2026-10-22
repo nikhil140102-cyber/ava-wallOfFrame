@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { useApp } from "@/components/shell/AppContext";
 import { cancelRedemption, redeemReward } from "@/app/actions";
-import { num, timeAgo } from "@/lib/format";
+import { useI18n } from "@/components/I18nProvider";
 import { PageHelp } from "@/components/PageHelp";
 
 const TINT = {
@@ -15,42 +15,46 @@ const TINT = {
   "Give back": "var(--red)",
 };
 
+// Internal sentinel for the "All" filter (label is translated at render).
+const ALL = "__all__";
+
 export function RewardStore({ balance, lifetime, canRedeem, rewards, history }) {
   const { toast } = useApp();
-  const [cat, setCat] = useState("All");
+  const { t, fmt, rich } = useI18n();
+  const [cat, setCat] = useState(ALL);
   const [confirm, setConfirm] = useState(null);
   const [pending, setPending] = useState(false);
-  const cats = ["All", ...new Set(rewards.map((r) => r.category))];
-  const list = rewards.filter((r) => cat === "All" || r.category === cat);
+  const cats = [ALL, ...new Set(rewards.map((r) => r.category))];
+  const list = rewards.filter((r) => cat === ALL || r.category === cat);
   const held = history.filter((h) => h.status === "pending").reduce((n, h) => n + h.cost, 0);
 
   return (
     <main className="page">
       <header className="page-head">
         <div>
-          <h1 className="large-title">Rewards</h1>
-          <p>Spend the points your teammates give you.</p>
+          <h1 className="large-title">{t("rewards.title")}</h1>
+          <p>{t("rewards.subtitle")}</p>
         </div>
         <PageHelp topic="rewards" />
       </header>
 
       <section className="balance-hero">
         <div>
-          <span className="caption">Available to spend</span>
+          <span className="caption">{t("rewards.available")}</span>
           <div className="balance-amount num">
-            {num(balance)}
-            <small>points</small>
+            {fmt.num(balance)}
+            <small>{t("rewards.pointsUnit", { count: balance })}</small>
           </div>
-          {held > 0 && <span className="caption">{num(held)} held for pending requests</span>}
+          {held > 0 && <span className="caption">{t("rewards.held", { count: held, n: fmt.num(held) })}</span>}
         </div>
         <div className="balance-side">
           <div>
-            <b className="num">{num(lifetime)}</b>
-            <span className="caption">lifetime earned</span>
+            <b className="num">{fmt.num(lifetime)}</b>
+            <span className="caption">{t("rewards.lifetimeEarned")}</span>
           </div>
           <div>
             <b className="num">{history.filter((h) => h.status === "approved").length}</b>
-            <span className="caption">rewards redeemed</span>
+            <span className="caption">{t("rewards.redeemed")}</span>
           </div>
         </div>
       </section>
@@ -58,7 +62,7 @@ export function RewardStore({ balance, lifetime, canRedeem, rewards, history }) 
       <div className="toolbar" style={{ marginTop: 24 }}>
         {cats.map((c) => (
           <button key={c} className="chip" aria-pressed={cat === c} onClick={() => setCat(c)}>
-            {c}
+            {c === ALL ? t("rewards.all") : c}
           </button>
         ))}
       </div>
@@ -80,14 +84,14 @@ export function RewardStore({ balance, lifetime, canRedeem, rewards, history }) 
                 </p>
                 <div className="row" style={{ marginTop: 10 }}>
                   <span className="num" style={{ fontWeight: 700, flex: 1 }}>
-                    {num(r.cost)} <span className="caption">pts</span>
+                    {rich(t("rewards.costStyled"), { n: fmt.num(r.cost), pts: <span className="caption">{t("rewards.pts")}</span> })}
                   </span>
                   {short <= 0 ? (
                     <button className="btn btn-tinted btn-sm" disabled={!canRedeem} onClick={() => setConfirm(r)}>
-                      Redeem
+                      {t("rewards.redeem")}
                     </button>
                   ) : (
-                    <span className="caption num">{num(short)} more</span>
+                    <span className="caption num">{t("rewards.more", { count: short, n: fmt.num(short) })}</span>
                   )}
                 </div>
                 {short > 0 && (
@@ -102,10 +106,10 @@ export function RewardStore({ balance, lifetime, canRedeem, rewards, history }) 
       </div>
 
       <section style={{ marginTop: 36 }}>
-        <div className="section-label">Your requests</div>
+        <div className="section-label">{t("rewards.yourRequests")}</div>
         {history.length === 0 ? (
           <div className="group">
-            <div className="group-item caption">No requests yet.</div>
+            <div className="group-item caption">{t("rewards.noRequests")}</div>
           </div>
         ) : (
           <div className="group">
@@ -120,22 +124,28 @@ export function RewardStore({ balance, lifetime, canRedeem, rewards, history }) 
                 <span style={{ flex: 1 }}>
                   <b style={{ fontSize: 14 }}>{h.name}</b>
                   <span className="caption" style={{ display: "block" }}>
-                    {num(h.cost)} pts · {timeAgo(h.createdAt)}
+                    {t("rewards.cost", { n: fmt.num(h.cost) })} · {fmt.timeAgo(h.createdAt)}
                     {h.note ? ` · “${h.note}”` : ""}
                   </span>
                 </span>
                 <span className={`tag ${h.status === "approved" ? "tag-green" : h.status === "rejected" ? "tag-red" : "tag-orange"}`}>
-                  {h.status === "pending" ? "Waiting for HR or Super Admin" : h.status === "approved" ? "Approved" : "Declined · refunded"}
+                  {h.status === "pending"
+                    ? t("rewards.status.pending")
+                    : h.status === "approved"
+                      ? t("rewards.status.approved")
+                      : t("rewards.status.rejected")}
                 </span>
                 {h.status === "pending" && (
                   <button
                     className="btn btn-plain btn-sm btn-destructive"
                     onClick={async () => {
                       const r = await cancelRedemption(h.id);
-                      toast(r.ok ? `Request cancelled — ${num(h.cost)} points returned` : r.error, { tone: r.ok ? "default" : "error" });
+                      toast(r.ok ? t("rewards.cancelled", { count: h.cost, n: fmt.num(h.cost) }) : r.error, {
+                        tone: r.ok ? "default" : "error",
+                      });
                     }}
                   >
-                    Cancel
+                    {t("rewards.cancel")}
                   </button>
                 )}
               </div>
@@ -159,16 +169,15 @@ export function RewardStore({ balance, lifetime, canRedeem, rewards, history }) 
                 <Icon name={confirm.icon} size={26} />
               </span>
               <h2 id="redeem-title" className="title-3" style={{ marginTop: 14 }}>
-                Redeem {confirm.name}?
+                {t("rewards.confirm.title", { name: confirm.name })}
               </h2>
               <p className="subhead" style={{ marginTop: 6 }}>
-                {num(confirm.cost)} points will be held until HR or the Super Admin approves. You can cancel any time before then.
-                You&apos;ll have {num(balance - confirm.cost)} left.
+                {t("rewards.confirm.body", { count: confirm.cost, n: fmt.num(confirm.cost), left: fmt.num(balance - confirm.cost) })}
               </p>
             </div>
             <div className="sheet-foot">
               <button className="btn btn-gray" style={{ flex: 1 }} onClick={() => setConfirm(null)}>
-                Cancel
+                {t("rewards.cancel")}
               </button>
               <button
                 className="btn btn-filled"
@@ -179,10 +188,10 @@ export function RewardStore({ balance, lifetime, canRedeem, rewards, history }) 
                   const r = await redeemReward(confirm.id);
                   setPending(false);
                   setConfirm(null);
-                  toast(r.ok ? (r.message ?? "Requested") : r.error, { tone: r.ok ? "default" : "error" });
+                  toast(r.ok ? (r.message ?? t("rewards.requested")) : r.error, { tone: r.ok ? "default" : "error" });
                 }}
               >
-                Redeem
+                {t("rewards.redeem")}
               </button>
             </div>
           </div>

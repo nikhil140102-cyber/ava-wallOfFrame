@@ -6,12 +6,14 @@ import { Icon } from "./Icon";
 import { Polaroid } from "./Polaroid";
 import { useApp } from "./shell/AppContext";
 import { shareOnThisDay } from "@/app/actions";
+import { useI18n } from "./I18nProvider";
 
 const todayKey = () => `wof-otd-hidden-${new Date().toISOString().slice(0, 10)}`;
 
 /** Facebook-style “On this day”: what happened on today’s date in earlier years. */
 export function OnThisDay({ groups, compact = false }) {
   const { toast, can } = useApp();
+  const { t, fmt } = useI18n();
   const [tab, setTab] = useState(0);
   const [selected, setSelected] = useState(null);
   const [hidden, setHidden] = useState(false);
@@ -26,14 +28,14 @@ export function OnThisDay({ groups, compact = false }) {
   if (!groups?.length || hidden) return null;
   const g = groups[Math.min(tab, groups.length - 1)];
   const pick = g.items.find((i) => i.id === selected) ?? g.items.find((i) => !i.private) ?? g.items[0];
-  const label = (n) => `${n} year${n > 1 ? "s" : ""} ago`;
-  const date = new Date(g.items[0].at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const label = (n) => t("otd.yearsAgo", { count: n });
+  const date = fmt.date(g.items[0].at, { day: "numeric", month: "long", year: "numeric" });
 
   async function share() {
     setPending(true);
     const r = await shareOnThisDay(pick.id);
     setPending(false);
-    toast(r.ok ? "Memory shared to the feed" : r.error, { tone: r.ok ? "default" : "error" });
+    toast(r.ok ? t("otd.shared") : r.error, { tone: r.ok ? "default" : "error" });
   }
 
   return (
@@ -44,11 +46,9 @@ export function OnThisDay({ groups, compact = false }) {
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h2 id="otd-title" className="title-3">
-            On this day
+            {t("otd.title")}
           </h2>
-          <p className="caption">
-            {label(g.yearsAgo)} today · {date}
-          </p>
+          <p className="caption">{t("otd.yearsAgoToday", { count: g.yearsAgo, date })}</p>
         </div>
         <button
           className="btn btn-plain btn-sm"
@@ -58,14 +58,14 @@ export function OnThisDay({ groups, compact = false }) {
             } catch {}
             setHidden(true);
           }}
-          aria-label="Hide memories for today"
+          aria-label={t("otd.hide")}
         >
           <Icon name="x" size={14} />
         </button>
       </div>
 
       {groups.length > 1 && (
-        <div className="segmented otd-tabs" role="tablist" aria-label="How long ago">
+        <div className="segmented otd-tabs" role="tablist" aria-label={t("otd.howLongAgo")}>
           {groups.map((x, i) => (
             <button key={x.year} role="tab" aria-selected={i === tab} onClick={() => (setTab(i), setSelected(null))}>
               {label(x.yearsAgo)}
@@ -86,18 +86,18 @@ export function OnThisDay({ groups, compact = false }) {
       </div>
 
       <div className="otd-foot">
-        <p className="otd-quote">
+        <p className="otd-quote" dir="auto">
           <b>{pick.title}</b>
           {pick.detail ? <span> — {pick.detail.length > 120 ? `${pick.detail.slice(0, 120)}…` : pick.detail}</span> : null}
         </p>
         <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
           {can("recognition.give") && !pick.private && (
             <button className="btn btn-filled btn-sm" onClick={share} disabled={pending}>
-              <Icon name="send" size={13} /> {pending ? "Sharing…" : "Share Memory"}
+              <Icon name="send" size={13} /> {pending ? t("otd.sharing") : t("otd.share")}
             </button>
           )}
           <Link className="btn btn-gray btn-sm" href={`/wall?y=${g.year}`}>
-            See your {g.year} wall
+            {t("otd.seeWall", { year: g.year })}
           </Link>
         </div>
       </div>

@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon } from "./Icon";
 import { useApp } from "./shell/AppContext";
+import { useI18n } from "./I18nProvider";
 
 /** First-week checklist. Each step completes itself from real activity; people can hide it any time. */
 export function GettingStarted({ steps }) {
   const { data, openRecognize } = useApp();
+  const { t } = useI18n();
   const storageKey = `wof-onboarding-hidden-${data.me.id}`;
   const [hidden, setHidden] = useState(true);
   useEffect(() => {
@@ -22,13 +24,11 @@ export function GettingStarted({ steps }) {
   if (hidden || done === steps.length) return null;
 
   return (
-    <section className="card card-pad onboarding" aria-label="Getting started">
+    <section className="card card-pad onboarding" aria-label={t("home.gettingStarted.label")}>
       <div className="row" style={{ alignItems: "flex-start" }}>
         <div style={{ flex: 1 }}>
-          <h2 className="headline">Get started with Wall of Frames</h2>
-          <p className="caption">
-            {done} of {steps.length} done · takes about 2 minutes
-          </p>
+          <h2 className="headline">{t("home.gettingStarted.title")}</h2>
+          <p className="caption">{t("home.gettingStarted.progress", { done, total: steps.length })}</p>
         </div>
         <button
           className="btn btn-plain btn-sm"
@@ -39,7 +39,7 @@ export function GettingStarted({ steps }) {
             setHidden(true);
           }}
         >
-          Hide
+          {t("home.gettingStarted.hide")}
         </button>
       </div>
       <div className="progress" style={{ margin: "12px 0 6px" }}>

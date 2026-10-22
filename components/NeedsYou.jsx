@@ -1,24 +1,26 @@
 import Link from "next/link";
 import { Icon } from "./Icon";
+import { getI18n } from "@/lib/i18n/server";
 
 /** Role-aware to-do card on Home: only shows what this person can act on right now. */
-export function NeedsYou({ tasks }) {
+export async function NeedsYou({ tasks }) {
   if (!tasks.length) return null;
+  const { t } = await getI18n();
   return (
-    <section className="card card-pad" aria-label="Needs your attention">
+    <section className="card card-pad" aria-label={t("home.needsYou.label")}>
       <h2 className="headline" style={{ marginBottom: 6 }}>
-        Needs you
+        {t("home.needsYou.title")}
       </h2>
-      {tasks.map((t) => (
-        <Link key={t.key} href={t.href} className="rail-row task-row">
-          <span className="task-icon" style={{ color: t.tint, background: `color-mix(in srgb, ${t.tint} 13%, transparent)` }}>
-            <Icon name={t.icon} size={17} />
+      {tasks.map((task) => (
+        <Link key={task.key} href={task.href} className="rail-row task-row">
+          <span className="task-icon" style={{ color: task.tint, background: `color-mix(in srgb, ${task.tint} 13%, transparent)` }}>
+            <Icon name={task.icon} size={17} />
           </span>
           <span style={{ flex: 1, minWidth: 0 }}>
-            <b>{t.title}</b>
-            <span className="caption">{t.detail}</span>
+            <b>{task.title}</b>
+            <span className="caption">{task.detail}</span>
           </span>
-          <span className="task-cta">{t.cta}</span>
+          <span className="task-cta">{task.cta}</span>
         </Link>
       ))}
     </section>

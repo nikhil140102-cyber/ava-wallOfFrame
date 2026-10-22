@@ -10,10 +10,11 @@ import { Icon } from "@/components/Icon";
 import { PostCard } from "@/components/PostCard";
 import { RecognizeButton } from "@/components/RecognizeButton";
 import { AwardBadgeButton } from "./AwardBadgeButton";
-import { formatDate, num } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 
 export default async function ProfilePage({ params }) {
   const me = await requireUser();
+  const { t, fmt, rich } = await getI18n();
   const { id } = await params;
   const manager = alias(s.users, "manager");
   const row = await db
@@ -68,31 +69,35 @@ export default async function ProfilePage({ params }) {
             <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
               <h1 className="title-1">{u.name}</h1>
               <LevelPill name={lvl.current.name} color={lvl.current.color} />
-              {!u.active && <span className="tag tag-red">Deactivated</span>}
+              {!u.active && <span className="tag tag-red">{t("profile.deactivated")}</span>}
             </div>
             <p className="secondary" style={{ marginTop: 2 }}>
               {[u.title, row.department, u.city].filter(Boolean).join(" · ")}
             </p>
             <p className="caption" style={{ marginTop: 4 }}>
-              <span style={{ color: row.role.color, fontWeight: 600 }}>{row.role.name}</span> · Joined {formatDate(u.joinedAt)}
+              <span style={{ color: row.role.color, fontWeight: 600 }}>{row.role.name}</span> ·{" "}
+              {t("profile.joined", { date: fmt.date(u.joinedAt) })}
               {row.managerId && (
                 <>
-                  {" "}
-                  · Reports to{" "}
-                  <Link href={`/people/${row.managerId}`} style={{ color: "var(--accent)" }}>
-                    {row.managerName}
-                  </Link>
+                  {" · "}
+                  {rich(t("profile.reportsTo"), {
+                    name: (
+                      <Link href={`/people/${row.managerId}`} style={{ color: "var(--accent)" }}>
+                        {row.managerName}
+                      </Link>
+                    ),
+                  })}
                 </>
               )}
             </p>
           </div>
           <div className="row" style={{ gap: 8 }}>
             <Link href={isMe ? "/wall" : `/wall?u=${u.id}`} className="btn">
-              <Icon name="image" size={15} /> Memory Wall
+              <Icon name="image" size={15} /> {t("profile.memoryWall")}
             </Link>
             {isMe ? (
               <Link href="/settings" className="btn">
-                <Icon name="pencil" size={15} /> Edit Profile
+                <Icon name="pencil" size={15} /> {t("profile.editProfile")}
               </Link>
             ) : (
               <>
@@ -109,38 +114,40 @@ export default async function ProfilePage({ params }) {
 
       <div className="stat-grid" style={{ marginTop: 16 }}>
         <div className="stat">
-          <span className="caption">Lifetime points</span>
-          <b>{num(pts.lifetime)}</b>
+          <span className="caption">{t("profile.stat.lifetime")}</span>
+          <b>{fmt.num(pts.lifetime)}</b>
           <div className="progress" style={{ marginTop: 8 }}>
             <span style={{ width: `${lvl.progress * 100}%`, background: lvl.current.color }} />
           </div>
-          <span className="caption">{lvl.next ? `${num(lvl.toNext)} to ${lvl.next.name}` : "Top level"}</span>
+          <span className="caption">
+            {lvl.next ? t("profile.stat.toNext", { n: fmt.num(lvl.toNext), level: lvl.next.name }) : t("profile.stat.topLevel")}
+          </span>
         </div>
         <div className="stat">
-          <span className="caption">Appreciations received</span>
-          <b>{Number(received?.n ?? 0)}</b>
+          <span className="caption">{t("profile.stat.received")}</span>
+          <b>{fmt.num(Number(received?.n ?? 0))}</b>
         </div>
         <div className="stat">
-          <span className="caption">Appreciations given</span>
-          <b>{Number(given?.n ?? 0)}</b>
+          <span className="caption">{t("profile.stat.given")}</span>
+          <b>{fmt.num(Number(given?.n ?? 0))}</b>
         </div>
         <div className="stat">
-          <span className="caption">{canSeeBalance ? "Points balance" : "Badges"}</span>
-          <b>{canSeeBalance ? num(pts.balance) : earned.length}</b>
-          {canSeeBalance && <span className="caption">Only visible to {isMe ? "you" : "admins"}</span>}
+          <span className="caption">{canSeeBalance ? t("profile.stat.balance") : t("profile.stat.badges")}</span>
+          <b>{canSeeBalance ? fmt.num(pts.balance) : fmt.num(earned.length)}</b>
+          {canSeeBalance && <span className="caption">{isMe ? t("profile.stat.onlyYou") : t("profile.stat.onlyAdmins")}</span>}
         </div>
       </div>
 
       <div className="grid-2" style={{ marginTop: 28 }}>
         <section className="stack">
-          <h2 className="title-3">Activity</h2>
+          <h2 className="title-3">{t("profile.activity")}</h2>
           {feed.length === 0 ? (
             <div className="card empty">
               <span className="empty-icon">
                 <Icon name="sparkles" size={26} />
               </span>
-              <h3>No activity yet</h3>
-              <p>{isMe ? "Recognise a teammate to get started." : `Be the first to recognise ${u.name.split(" ")[0]}.`}</p>
+              <h3>{t("profile.activity.emptyTitle")}</h3>
+              <p>{isMe ? t("profile.activity.emptyMe") : t("profile.activity.emptyOther", { name: u.name.split(" ")[0] })}</p>
             </div>
           ) : (
             feed.map((p) => <PostCard key={p.id} post={p} />)
@@ -150,18 +157,18 @@ export default async function ProfilePage({ params }) {
           <section className="card card-pad">
             <div className="row" style={{ marginBottom: 12 }}>
               <h2 className="headline" style={{ flex: 1 }}>
-                Badges
+                {t("profile.badges")}
               </h2>
               <span className="caption">
-                {earned.length} of {allBadges.length}
+                {t("profile.badgesCount", { earned: fmt.num(earned.length), total: fmt.num(allBadges.length) })}
               </span>
             </div>
             {earned.length === 0 ? (
-              <p className="caption">No badges yet.</p>
+              <p className="caption">{t("profile.noBadges")}</p>
             ) : (
               <div className="profile-badges">
                 {earned.map((b) => (
-                  <Link key={b.id} href={`/badges#${b.id}`} title={`${b.name} · ${formatDate(b.at)}`}>
+                  <Link key={b.id} href={`/badges#${b.id}`} title={t("profile.badgeTooltip", { name: b.name, date: fmt.date(b.at) })}>
                     <span className="badge-medal" style={{ width: 48, height: 48, background: b.color }}>
                       <Icon name={b.icon} size={22} />
                     </span>

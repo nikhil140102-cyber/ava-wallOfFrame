@@ -1,0 +1,11 @@
+{
+  "group.actions": "Actions",
+  "group.goTo": "Go to",
+  "group.people": "People",
+  "group.recognize": "Recognize",
+  "adminOverview": "Admin Overview",
+  "recognizePerson": "Recognize {name}",
+  "placeholder": "Search people, pages and actions",
+  "label": "Search",
+  "empty": "No results for “{query}”"
+}

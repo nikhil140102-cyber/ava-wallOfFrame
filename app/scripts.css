@@ -1,0 +1,102 @@
+/*
+ * Scripts & direction for the 23 languages.
+ * Latin text keeps the system font / Bricolage; any Indian script falls through to its Noto font,
+ * glyph by glyph — so mixed content (a Tamil post on a Hindi screen) renders correctly too.
+ */
+:root {
+  --font-indic:
+    "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Gujarati", "Noto Sans Gurmukhi", "Noto Sans Kannada",
+    "Noto Sans Malayalam", "Noto Sans Oriya", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Ol Chiki",
+    "Noto Sans Meetei Mayek", "Noto Naskh Arabic";
+  --font:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, var(--font-indic),
+    "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Bricolage Grotesque", "Outfit", var(--font-indic), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+body {
+  font-family: var(--font);
+}
+
+/* Urdu reads best in Nastaliq; Kashmiri in Naskh. Both are tall scripts — give lines more room. */
+html[lang="ur"] {
+  --font-indic: "Noto Nastaliq Urdu", "Noto Naskh Arabic";
+}
+html[lang="ur"] body,
+html[lang="ks"] body {
+  line-height: 1.75;
+}
+html[lang="ur"] .large-title,
+html[lang="ur"] .title-1,
+html[lang="ur"] .title-2,
+html[lang="ur"] .title-3 {
+  line-height: 1.6;
+}
+
+/* Indian scripts have tall marks above and below — headings need a little more line-height. */
+html:not([lang="en"]) .large-title {
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+html:not([lang="en"]) .fotd blockquote {
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+/* Handwritten captions: Caveat for Latin, the script's own font for everything else. */
+.pol-cap,
+.pol-title,
+.fotd-print .fotd-quote-art,
+.art-quote q,
+.line-label {
+  font-family: Caveat, var(--font-indic), cursive;
+}
+
+/* ── Right-to-left (Urdu, Kashmiri) ───────────────────────── */
+/* Flex and grid flip by themselves; these are the few places that used physical left/right. */
+[dir="rtl"] .main {
+  margin: var(--canvas-gap) 0 var(--canvas-gap) var(--canvas-gap);
+}
+[dir="rtl"] .nav-item[aria-current="page"] {
+  box-shadow: inset -2px 0 0 var(--frame-gold);
+}
+[dir="rtl"] .fotd-frame {
+  transform: rotate(1.2deg);
+}
+[dir="rtl"] .fotd-label::before {
+  order: 1;
+}
+[dir="rtl"] .chev,
+[dir="rtl"] .group-item > svg:last-child {
+  transform: scaleX(-1);
+}
+@media (max-width: 900px) {
+  [dir="rtl"] .main {
+    margin: 0;
+  }
+  [dir="rtl"] .sidebar {
+    left: auto;
+    right: 0;
+    transform: translateX(100%);
+  }
+  [dir="rtl"] .sidebar[data-open] {
+    transform: none;
+  }
+}
+
+/* Long labels in some languages (e.g. Malayalam "Recognize someone") wrap instead of spilling out. */
+.sidebar-cta {
+  white-space: normal;
+  height: auto;
+  min-height: 40px;
+  padding-block: 8px;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* Phone tab bar: a little more solid so tall scripts scrolling underneath don't show through. */
+@media (max-width: 900px) {
+  .tabbar {
+    background: color-mix(in srgb, var(--bg) 97%, transparent);
+  }
+}

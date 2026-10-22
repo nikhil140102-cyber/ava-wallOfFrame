@@ -7,10 +7,11 @@ import { Icon } from "@/components/Icon";
 import { RecognizeButton } from "@/components/RecognizeButton";
 import { useApp } from "@/components/shell/AppContext";
 import { nudge } from "@/app/actions";
-import { timeAgo } from "@/lib/format";
+import { useI18n } from "@/components/I18nProvider";
 
 export function TeamTable({ rows, canNudge, canAward }) {
   const { toast } = useApp();
+  const { t, fmt } = useI18n();
   const [nudged, setNudged] = useState(new Set());
 
   if (!rows.length) {
@@ -19,8 +20,8 @@ export function TeamTable({ rows, canNudge, canAward }) {
         <span className="empty-icon">
           <Icon name="users" size={26} />
         </span>
-        <h3>No direct reports</h3>
-        <p>When HR sets you as someone&apos;s manager, they&apos;ll appear here.</p>
+        <h3>{t("team.empty.title")}</h3>
+        <p>{t("team.empty.body")}</p>
       </div>
     );
   }
@@ -30,11 +31,11 @@ export function TeamTable({ rows, canNudge, canAward }) {
       <table className="table">
         <thead>
           <tr>
-            <th>Person</th>
-            <th>Level</th>
-            <th style={{ textAlign: "right" }}>Given</th>
-            <th style={{ textAlign: "right" }}>Received</th>
-            <th>Last recognised</th>
+            <th>{t("team.col.person")}</th>
+            <th>{t("team.col.level")}</th>
+            <th style={{ textAlign: "right" }}>{t("team.col.given")}</th>
+            <th style={{ textAlign: "right" }}>{t("team.col.received")}</th>
+            <th>{t("team.col.lastRecognised")}</th>
             <th />
           </tr>
         </thead>
@@ -50,7 +51,7 @@ export function TeamTable({ rows, canNudge, canAward }) {
                       {r.title}
                     </span>
                   </span>
-                  {r.newJoiner && <span className="tag tag-teal">New</span>}
+                  {r.newJoiner && <span className="tag tag-teal">{t("team.new")}</span>}
                 </Link>
               </td>
               <td>
@@ -60,13 +61,13 @@ export function TeamTable({ rows, canNudge, canAward }) {
                 className="num"
                 style={{ textAlign: "right", color: r.quiet ? "var(--orange)" : undefined, fontWeight: r.quiet ? 600 : 400 }}
               >
-                {r.given}
+                {fmt.num(r.given)}
               </td>
               <td className="num" style={{ textAlign: "right" }}>
-                {r.received}
+                {fmt.num(r.received)}
               </td>
               <td className="caption">
-                {r.lastRecognised ? timeAgo(r.lastRecognised) : <span style={{ color: "var(--orange)" }}>Never</span>}
+                {r.lastRecognised ? fmt.timeAgo(r.lastRecognised) : <span style={{ color: "var(--orange)" }}>{t("team.never")}</span>}
               </td>
               <td>
                 <div className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
@@ -77,15 +78,15 @@ export function TeamTable({ rows, canNudge, canAward }) {
                       onClick={async () => {
                         const res = await nudge(r.id);
                         if (res.ok) setNudged(new Set(nudged).add(r.id));
-                        toast(res.ok ? (res.message ?? "Nudged") : res.error, { tone: res.ok ? "default" : "error" });
+                        toast(res.ok ? (res.message ?? t("team.nudged")) : res.error, { tone: res.ok ? "default" : "error" });
                       }}
                     >
-                      <Icon name="hand" size={14} /> {nudged.has(r.id) ? "Nudged" : "Nudge"}
+                      <Icon name="hand" size={14} /> {nudged.has(r.id) ? t("team.nudged") : t("team.nudge")}
                     </button>
                   )}
                   {canAward && (
                     <Link href={`/people/${r.id}`} className="btn btn-sm">
-                      <Icon name="award" size={14} /> Badge
+                      <Icon name="award" size={14} /> {t("team.badge")}
                     </Link>
                   )}
                   <RecognizeButton to={r.id} />

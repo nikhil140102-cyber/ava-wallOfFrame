@@ -5,8 +5,8 @@ import { useOptimistic, useState, useTransition } from "react";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/Icon";
 import { markNotificationsRead } from "@/app/actions";
-import { timeAgo } from "@/lib/format";
 import { PageHelp } from "@/components/PageHelp";
+import { useI18n } from "@/components/I18nProvider";
 
 const KIND = {
   appreciation: { icon: "sparkles", color: "var(--accent)" },
@@ -22,6 +22,7 @@ const KIND = {
 
 export function NotificationList({ items }) {
   const router = useRouter();
+  const { t, fmt } = useI18n();
   const [filter, setFilter] = useState("all");
   const [, start] = useTransition();
   const [list, markRead] = useOptimistic(items, (state, ids) =>
@@ -31,24 +32,24 @@ export function NotificationList({ items }) {
   const shown = list.filter((n) => filter === "all" || !n.read);
   const today = new Date().setHours(0, 0, 0, 0);
   const groups = [
-    { label: "Today", items: shown.filter((n) => n.createdAt >= today) },
-    { label: "Earlier", items: shown.filter((n) => n.createdAt < today) },
+    { key: "today", label: t("notifications.today"), items: shown.filter((n) => n.createdAt >= today) },
+    { key: "earlier", label: t("notifications.earlier"), items: shown.filter((n) => n.createdAt < today) },
   ].filter((g) => g.items.length);
 
   return (
     <>
       <header className="page-head">
         <div>
-          <h1 className="large-title">Notifications</h1>
-          <p>{unread ? `${unread} unread` : "You're all caught up."}</p>
+          <h1 className="large-title">{t("notifications.title")}</h1>
+          <p>{unread ? t("notifications.unreadCount", { count: unread, n: fmt.num(unread) }) : t("notifications.caughtUp")}</p>
         </div>
         <PageHelp topic="notifications" />
-        <div className="segmented" role="tablist">
+        <div className="segmented" role="tablist" aria-label={t("notifications.filter.label")}>
           <button role="tab" aria-selected={filter === "all"} onClick={() => setFilter("all")}>
-            All
+            {t("notifications.filter.all")}
           </button>
           <button role="tab" aria-selected={filter === "unread"} onClick={() => setFilter("unread")}>
-            Unread
+            {t("notifications.filter.unread")}
           </button>
         </div>
         <button
@@ -61,7 +62,7 @@ export function NotificationList({ items }) {
             })
           }
         >
-          Mark All as Read
+          {t("notifications.markAllRead")}
         </button>
       </header>
 
@@ -70,13 +71,13 @@ export function NotificationList({ items }) {
           <span className="empty-icon">
             <Icon name="inbox" size={26} />
           </span>
-          <h3>{filter === "unread" ? "No unread notifications" : "No notifications yet"}</h3>
-          <p>Appreciations, comments, badges and reward updates will show up here.</p>
+          <h3>{filter === "unread" ? t("notifications.empty.unread") : t("notifications.empty.all")}</h3>
+          <p>{t("notifications.empty.body")}</p>
         </div>
       )}
 
       {groups.map((g) => (
-        <section key={g.label} className="group-block">
+        <section key={g.key} className="group-block">
           <div className="section-label">{g.label}</div>
           <div className="group">
             {g.items.map((n) => {
@@ -130,9 +131,11 @@ export function NotificationList({ items }) {
                   </span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: "block", fontSize: 14.5, fontWeight: n.read ? 400 : 600, lineHeight: 1.4 }}>{n.title}</span>
-                    <span className="caption">{timeAgo(n.createdAt)}</span>
+                    <span className="caption">{fmt.timeAgo(n.createdAt)}</span>
                   </span>
-                  {!n.read && <span className="dot" style={{ background: "var(--accent)", marginTop: 6 }} aria-label="Unread" />}
+                  {!n.read && (
+                    <span className="dot" style={{ background: "var(--accent)", marginTop: 6 }} aria-label={t("notifications.unread")} />
+                  )}
                 </button>
               );
             })}

@@ -5,13 +5,18 @@ import { getLeaderboard, getLevels, getPoints, levelFor } from "@/lib/queries";
 import { Avatar, LevelPill } from "@/components/Avatar";
 import { Icon } from "@/components/Icon";
 import { PageHelp } from "@/components/PageHelp";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Leaderboard" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t("leaderboard.title") };
+}
 
-const PERIODS = { week: { label: "This Week", days: 7 }, month: { label: "30 Days", days: 30 }, all: { label: "All Time", days: null } };
+const PERIODS = { week: { days: 7 }, month: { days: 30 }, all: { days: null } };
 
 export default async function LeaderboardPage({ searchParams }) {
   const user = await requireUser();
+  const { t } = await getI18n();
   const sp = await searchParams;
   const period = sp.period && sp.period in PERIODS ? sp.period : "month";
   const dept = sp.dept ?? "";
@@ -30,14 +35,14 @@ export default async function LeaderboardPage({ searchParams }) {
     <main className="page">
       <header className="page-head">
         <div>
-          <h1 className="large-title">Leaderboard</h1>
-          <p>Points received from appreciations and badges{myRank >= 0 ? ` · You're #${myRank + 1}` : ""}.</p>
+          <h1 className="large-title">{t("leaderboard.title")}</h1>
+          <p>{myRank >= 0 ? t("leaderboard.subRank", { rank: myRank + 1 }) : t("leaderboard.sub")}</p>
         </div>
         <PageHelp topic="leaderboard" />
-        <nav className="segmented" aria-label="Period">
+        <nav className="segmented" aria-label={t("leaderboard.period")}>
           {Object.keys(PERIODS).map((p) => (
             <Link key={p} href={q(p, dept)} aria-selected={period === p} role="tab">
-              {PERIODS[p].label}
+              {t(`leaderboard.period.${p}`)}
             </Link>
           ))}
         </nav>
@@ -45,7 +50,7 @@ export default async function LeaderboardPage({ searchParams }) {
 
       <div className="toolbar">
         <Link href={q(period, "")} className="chip" aria-pressed={!dept}>
-          Whole company
+          {t("leaderboard.wholeCompany")}
         </Link>
         {depts.map((d) => (
           <Link key={d.id} href={q(period, d.id)} className="chip" aria-pressed={dept === d.id}>
@@ -59,8 +64,8 @@ export default async function LeaderboardPage({ searchParams }) {
           <span className="empty-icon">
             <Icon name="trophy" size={26} />
           </span>
-          <h3>No points yet</h3>
-          <p>Nobody has received points in this period. Recognition you give shows up here.</p>
+          <h3>{t("leaderboard.empty.title")}</h3>
+          <p>{t("leaderboard.empty.body")}</p>
         </div>
       ) : (
         <>
@@ -74,7 +79,7 @@ export default async function LeaderboardPage({ searchParams }) {
                   <Avatar name={p.name} size={place === 1 ? 76 : 60} ring={lvl.current.color} />
                   <b>{p.name}</b>
                   <span className="caption">{p.department}</span>
-                  <span className="podium-pts num">{p.points} pts</span>
+                  <span className="podium-pts num">{t("leaderboard.pts", { points: p.points })}</span>
                   <span className="podium-step">{place}</span>
                 </Link>
               );
@@ -96,7 +101,8 @@ export default async function LeaderboardPage({ searchParams }) {
                     </span>
                     <Avatar name={p.name} size={32} />
                     <span style={{ flex: 1 }}>
-                      <b style={{ fontSize: 14 }}>{p.name}</b> {p.id === user.id && <span className="tag tag-accent">You</span>}
+                      <b style={{ fontSize: 14 }}>{p.name}</b>{" "}
+                      {p.id === user.id && <span className="tag tag-accent">{t("leaderboard.you")}</span>}
                       <span className="caption" style={{ display: "block" }}>
                         {p.title} · {p.department}
                       </span>

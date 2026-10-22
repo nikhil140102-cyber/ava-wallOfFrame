@@ -6,11 +6,16 @@ import { getLevels, getPoints, levelFor } from "@/lib/queries";
 import { Avatar, LevelPill } from "@/components/Avatar";
 import { Icon } from "@/components/Icon";
 import { PageHelp } from "@/components/PageHelp";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "People" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t("people.title") };
+}
 
 export default async function PeoplePage({ searchParams }) {
   await requireUser();
+  const { t, fmt } = await getI18n();
   const { q = "", dept = "" } = await searchParams;
   const depts = await db.select().from(s.departments).orderBy(s.departments.name);
   const term = `%${q.trim()}%`;
@@ -32,10 +37,15 @@ export default async function PeoplePage({ searchParams }) {
     <main className="page">
       <header className="page-head">
         <div>
-          <h1 className="large-title">People</h1>
+          <h1 className="large-title">{t("people.title")}</h1>
           <p>
-            {people.length} {people.length === 1 ? "person" : "people"}
-            {dept ? ` in ${depts.find((d) => d.id === dept)?.name}` : " across the company"}
+            {dept
+              ? t("people.countDept", {
+                  count: people.length,
+                  n: fmt.num(people.length),
+                  dept: depts.find((d) => d.id === dept)?.name ?? "",
+                })
+              : t("people.countCompany", { count: people.length, n: fmt.num(people.length) })}
           </p>
         </div>
         <PageHelp topic="people" />
@@ -44,12 +54,12 @@ export default async function PeoplePage({ searchParams }) {
       <form className="toolbar" action="/people">
         <label className="search" style={{ width: 280 }}>
           <Icon name="search" size={16} />
-          <input name="q" defaultValue={q} placeholder="Search name or title" aria-label="Search people" />
+          <input name="q" defaultValue={q} placeholder={t("people.searchPlaceholder")} aria-label={t("people.searchLabel")} />
         </label>
         {dept && <input type="hidden" name="dept" value={dept} />}
         <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
           <Link href={`/people${q ? `?q=${encodeURIComponent(q)}` : ""}`} className="chip" aria-pressed={!dept}>
-            All
+            {t("people.all")}
           </Link>
           {depts.map((d) => (
             <Link
@@ -69,8 +79,8 @@ export default async function PeoplePage({ searchParams }) {
           <span className="empty-icon">
             <Icon name="search" size={26} />
           </span>
-          <h3>No one found</h3>
-          <p>Try a different name, or clear the department filter.</p>
+          <h3>{t("people.empty.title")}</h3>
+          <p>{t("people.empty.body")}</p>
         </div>
       ) : (
         <div className="people-grid">

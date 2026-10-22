@@ -47,6 +47,8 @@ export const users = sqliteTable(
       .notNull()
       .references(() => roles.id),
     active: integer("active", { mode: "boolean" }).notNull().default(true),
+    /** Preferred language (code from lib/i18n/locales.js); empty = follow the browser. */
+    locale: text("locale").notNull().default(""),
     theme: text("theme", { enum: ["system", "light", "dark"] })
       .notNull()
       .default("system"),

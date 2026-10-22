@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useApp } from "./shell/AppContext";
 import { Icon } from "./Icon";
-import { num } from "@/lib/format";
+import { useI18n } from "./I18nProvider";
 
 /** Activity-ring style level card: progress to the next level, balance and giving budget. */
 export function LevelCard() {
   const { data } = useApp();
+  const { t, fmt } = useI18n();
   const { level, balance, budget } = data;
   const r = 34;
   const c = 2 * Math.PI * r;
@@ -32,23 +33,25 @@ export function LevelCard() {
           />
         </svg>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="caption">Your level</div>
+          <div className="caption">{t("level.yourLevel")}</div>
           <div className="title-2" style={{ color: level.color }}>
             {level.name}
           </div>
-          <div className="caption">{level.nextName ? `${num(level.toNext)} pts to ${level.nextName}` : "Top level reached 🎉"}</div>
+          <div className="caption">
+            {level.nextName ? t("level.toNext", { points: fmt.num(level.toNext), level: level.nextName }) : t("level.topReached")}
+          </div>
         </div>
       </div>
       <div className="level-stats">
         <Link href="/rewards">
-          <span className="caption">Balance</span>
-          <b className="num">{num(balance)}</b>
-          <span className="caption">points to spend</span>
+          <span className="caption">{t("level.balance")}</span>
+          <b className="num">{fmt.num(balance)}</b>
+          <span className="caption">{t("level.pointsToSpend")}</span>
         </Link>
         <div>
-          <span className="caption">Left to give</span>
+          <span className="caption">{t("level.leftToGive")}</span>
           <b className="num">{left}</b>
-          <span className="caption">of {budget.monthly} this month</span>
+          <span className="caption">{t("level.ofThisMonth", { total: budget.monthly })}</span>
         </div>
       </div>
       <Link
@@ -56,7 +59,7 @@ export function LevelCard() {
         className="row caption"
         style={{ marginTop: 12, color: "var(--accent)", fontWeight: 600, fontSize: 13, gap: 4 }}
       >
-        Browse rewards <Icon name="chevronRight" size={13} stroke={2.4} />
+        {t("level.browseRewards")} <Icon name="chevronRight" size={13} stroke={2.4} />
       </Link>
     </section>
   );

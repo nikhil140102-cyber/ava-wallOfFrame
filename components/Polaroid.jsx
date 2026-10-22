@@ -1,11 +1,11 @@
 "use client";
 
 import { Icon } from "./Icon";
+import { useI18n } from "./I18nProvider";
 
 // Shared polaroid pieces for the Memory Wall and the "On this day" card.
 
 const first = (n) => n.split(" ")[0];
-const fmt = (ms, opts) => new Date(ms).toLocaleDateString("en-IN", opts);
 
 /** Small, stable "random" number per item so each polaroid hangs at its own angle. */
 function wobble(id) {
@@ -38,7 +38,7 @@ export function Art({ item, big = false }) {
           <b>{item.levelName}</b>
         </span>
       ) : item.kind === "appreciation" ? (
-        <span className="art-quote">
+        <span className="art-quote" dir="auto">
           <q>{item.detail}</q>
         </span>
       ) : (
@@ -46,18 +46,19 @@ export function Art({ item, big = false }) {
           <Icon name={item.icon} size={big ? 44 : 30} />
         </span>
       )}
-      {item.kind === "badge" && <span className="art-tag">{item.title.replace("Earned ", "")}</span>}
+      {item.kind === "badge" && <span className="art-tag">{item.badgeName ?? item.title}</span>}
     </div>
   );
 }
 
 export function Polaroid({ item, showName, onOpen }) {
+  const { t, fmt } = useI18n();
   return (
     <button
       className="polaroid"
       style={{ "--tilt": `${wobble(item.id)}deg` }}
       onClick={onOpen}
-      aria-label={`${item.title}, ${fmt(item.at, { day: "numeric", month: "long" })}`}
+      aria-label={t("polaroid.aria", { title: item.title, date: fmt.date(item.at, { day: "numeric", month: "long" }) })}
     >
       <Peg />
       <span className="pol-photo">
@@ -70,8 +71,8 @@ export function Polaroid({ item, showName, onOpen }) {
       <span className="pol-cap">
         <span className="pol-title">{showName ? `${first(item.userName)} · ${item.title}` : item.title}</span>
         <span className="pol-date">
-          {fmt(item.at, { day: "numeric", month: "short" })}
-          {item.private ? " · only you" : ""}
+          {fmt.date(item.at, { day: "numeric", month: "short" })}
+          {item.private ? ` · ${t("polaroid.onlyYou")}` : ""}
         </span>
       </span>
     </button>

@@ -16,17 +16,21 @@ import { getActivity } from "@/lib/analytics";
 import { getOnThisDay } from "@/lib/memories";
 import { OnThisDay } from "@/components/OnThisDay";
 import { FrameOfTheDay, pickFrameOfTheDay } from "@/components/FrameOfTheDay";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Home" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t("home.title") };
+}
 
-function greeting() {
+function greeting(t, name) {
   const h = Number(new Date().toLocaleString("en-IN", { hour: "numeric", hour12: false, timeZone: "Asia/Kolkata" }));
-  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  return t(h < 12 ? "home.greeting.morning" : h < 17 ? "home.greeting.afternoon" : "home.greeting.evening", { name });
 }
 
 const count = (row) => Number(row?.n ?? 0);
 
-async function onboardingSteps(userId, bio) {
+async function onboardingSteps(t, userId, bio) {
   const [given, reacted, commented, visitedRewards] = await Promise.all([
     db
       .select({ n: sql`count(*)` })
@@ -50,14 +54,14 @@ async function onboardingSteps(userId, bio) {
       .get(),
   ]);
   return [
-    { key: "profile", label: "Add a short bio so people know you", done: bio.trim().length > 0, href: "/settings" },
-    { key: "recognize", label: "Thank a teammate for something they did", done: count(given) > 0, action: "recognize" },
-    { key: "react", label: "Applaud or comment on a post", done: count(reacted) + count(commented) > 0, href: "/home" },
-    { key: "rewards", label: "Look at what your points can buy", done: count(visitedRewards) > 0, href: "/rewards" },
+    { key: "profile", label: t("home.steps.profile"), done: bio.trim().length > 0, href: "/settings" },
+    { key: "recognize", label: t("home.steps.recognize"), done: count(given) > 0, action: "recognize" },
+    { key: "react", label: t("home.steps.react"), done: count(reacted) + count(commented) > 0, href: "/home" },
+    { key: "rewards", label: t("home.steps.rewards"), done: count(visitedRewards) > 0, href: "/rewards" },
   ];
 }
 
-async function tasksFor(user) {
+async function tasksFor(t, user) {
   const tasks = [];
   if (user.can("rewards.manage")) {
     const n = count(
@@ -72,10 +76,10 @@ async function tasksFor(user) {
         key: "rewards",
         icon: "gift",
         tint: "var(--orange)",
-        title: `${n} reward ${n === 1 ? "request" : "requests"} to review`,
-        detail: "Points are on hold until you decide",
+        title: t("home.tasks.rewards.title", { count: n }),
+        detail: t("home.tasks.rewards.detail"),
         href: "/admin/rewards",
-        cta: "Review",
+        cta: t("home.tasks.review"),
       });
   }
   if (user.can("moderation.manage")) {
@@ -91,10 +95,10 @@ async function tasksFor(user) {
         key: "reports",
         icon: "flag",
         tint: "var(--red)",
-        title: `${n} reported ${n === 1 ? "post" : "posts"}`,
-        detail: "Keep or hide from the feed",
+        title: t("home.tasks.reports.title", { count: n }),
+        detail: t("home.tasks.reports.detail"),
         href: "/admin/moderation",
-        cta: "Review",
+        cta: t("home.tasks.review"),
       });
   }
   if (user.can("team.view")) {
@@ -110,10 +114,10 @@ async function tasksFor(user) {
           key: "team",
           icon: "users",
           tint: "var(--teal)",
-          title: `${quiet} of ${team.length} teammates are quiet`,
-          detail: "They haven't thanked anyone this month",
+          title: t("home.tasks.team.title", { count: quiet, total: team.length }),
+          detail: t("home.tasks.team.detail"),
           href: "/team",
-          cta: "See team",
+          cta: t("home.tasks.seeTeam"),
         });
     }
   }
@@ -122,34 +126,33 @@ async function tasksFor(user) {
 
 export default async function HomePage({ searchParams }) {
   const user = await requireUser();
+  const { t, fmt } = await getI18n();
   const { filter } = await searchParams;
   const mine = filter === "me";
   const [feed, top, celebrations, steps, tasks, onThisDay] = await Promise.all([
     getFeed(user.id, mine ? { aboutUserId: user.id } : {}),
     getLeaderboard(30),
     getUpcomingCelebrations(),
-    onboardingSteps(user.id, user.bio),
-    tasksFor(user),
+    onboardingSteps(t, user.id, user.bio),
+    tasksFor(t, user),
     getOnThisDay({ userId: user.id, viewer: user }),
   ]);
-  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" });
+  const today = fmt.date(Date.now(), { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" });
 
   return (
     <main className="page">
       <header className="page-head">
         <div className="home-greet">
           <span className="home-date">{today}</span>
-          <h1 className="large-title">
-            {greeting()}, {user.name.split(" ")[0]}
-          </h1>
+          <h1 className="large-title">{greeting(t, user.name.split(" ")[0])}</h1>
         </div>
         <PageHelp topic="home" />
-        <nav className="segmented" aria-label="Feed filter">
+        <nav className="segmented" aria-label={t("home.feedFilter")}>
           <Link href="/home" aria-selected={!mine} role="tab" className="seg-link">
-            Everyone
+            {t("home.filter.everyone")}
           </Link>
           <Link href="/home?filter=me" aria-selected={mine} role="tab" className="seg-link">
-            Involving Me
+            {t("home.filter.me")}
           </Link>
         </nav>
       </header>
@@ -166,12 +169,8 @@ export default async function HomePage({ searchParams }) {
               <span className="empty-icon">
                 <Icon name="sparkles" size={26} />
               </span>
-              <h3>Nothing here yet</h3>
-              <p>
-                {mine
-                  ? "When someone recognises you, or you recognise them, it shows up here."
-                  : "Be the first to recognise someone this week."}
-              </p>
+              <h3>{t("home.empty.title")}</h3>
+              <p>{mine ? t("home.empty.mine") : t("home.empty.everyone")}</p>
             </div>
           ) : (
             feed.map((p) => <PostCard key={p.id} post={p} />)
@@ -185,10 +184,10 @@ export default async function HomePage({ searchParams }) {
           <section className="card card-pad">
             <div className="row" style={{ marginBottom: 8 }}>
               <h2 className="headline" style={{ flex: 1 }}>
-                Top this month
+                {t("home.top.title")}
               </h2>
               <Link href="/leaderboard" className="caption" style={{ color: "var(--accent)", fontWeight: 600 }}>
-                See all
+                {t("home.top.seeAll")}
               </Link>
             </div>
             {top.slice(0, 5).map((p, i) => (
@@ -206,13 +205,13 @@ export default async function HomePage({ searchParams }) {
                 </span>
               </Link>
             ))}
-            {top.length === 0 && <p className="caption">No points given yet this month.</p>}
+            {top.length === 0 && <p className="caption">{t("home.top.empty")}</p>}
           </section>
 
           {celebrations.length > 0 && (
             <section className="card card-pad">
               <h2 className="headline" style={{ marginBottom: 8 }}>
-                Coming up
+                {t("home.comingUp")}
               </h2>
               {celebrations.map((c) => (
                 <div key={c.id} className="rail-row">
@@ -220,11 +219,15 @@ export default async function HomePage({ searchParams }) {
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <b>{c.name}</b>
                     <span className="caption">
-                      {c.years} {c.years === 1 ? "year" : "years"} at the company ·{" "}
-                      {c.inDays === 0 ? "today 🎉" : c.inDays === 1 ? "tomorrow" : `in ${c.inDays} days`}
+                      {t("home.anniversary", { count: c.years })} ·{" "}
+                      {c.inDays === 0
+                        ? t("home.when.today")
+                        : c.inDays === 1
+                          ? t("home.when.tomorrow")
+                          : t("home.when.inDays", { count: c.inDays })}
                     </span>
                   </span>
-                  {c.id !== user.id && user.can("recognition.give") && <RecognizeButton to={c.id} label="Celebrate" />}
+                  {c.id !== user.id && user.can("recognition.give") && <RecognizeButton to={c.id} label={t("home.celebrate")} />}
                 </div>
               ))}
             </section>

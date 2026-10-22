@@ -1,0 +1,23 @@
+{
+  "add": "Add photos",
+  "addMore": "Add more",
+  "addOne": "Add photo",
+  "alt": "Photo {n}",
+  "remove": "Remove photo {n}",
+  "moveEarlier": "Move photo {n} earlier",
+  "moveLater": "Move photo {n} later",
+  "uploading": "Uploading photo",
+  "error.max": "You can add up to {max} photos.",
+  "error.onePerMoment": "One photo per moment.",
+  "error.room_one": "Only {count} more photo fits — added the first {count}.",
+  "error.room_other": "Only {count} more photos fit — added the first {count}.",
+  "error.type": "Only JPG, PNG, WebP or GIF photos can be added.",
+  "error.notPhoto": "That file doesn't look like a photo.",
+  "error.failed": "That photo couldn't be added.",
+  "open": "Open photo {n} of {total}",
+  "position": "Photo {n} of {total}",
+  "close": "Close photo",
+  "previous": "Previous photo",
+  "next": "Next photo",
+  "counter": "{n} / {total}"
+}

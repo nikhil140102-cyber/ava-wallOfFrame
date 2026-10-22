@@ -4,12 +4,17 @@ import { db, schema as s } from "@/db";
 import { requireUser } from "@/lib/auth";
 import { getPeopleLite } from "@/lib/queries";
 import { getOnThisDay, getWall, yearsSince } from "@/lib/memories";
+import { getI18n } from "@/lib/i18n/server";
 import { MemoryWall } from "./MemoryWall";
 
-export const metadata = { title: "Memory Wall" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t("wall.title") };
+}
 
 export default async function WallPage({ searchParams }) {
   const me = await requireUser();
+  const { t, fmt } = await getI18n();
   const sp = await searchParams;
   const everyone = sp.u === "all";
   const targetId = everyone ? me.id : sp.u || me.id;
@@ -30,8 +35,10 @@ export default async function WallPage({ searchParams }) {
     year,
     viewer: me,
     highlights: everyone,
+    t,
+    fmt,
   });
-  const onThisDay = !everyone && target.id === me.id && year === thisYear ? await getOnThisDay({ userId: me.id, viewer: me }) : [];
+  const onThisDay = !everyone && target.id === me.id && year === thisYear ? await getOnThisDay({ userId: me.id, viewer: me, t, fmt }) : [];
   // You can pin moments on your own wall; managers on their team's; HR and Super Admin on anyone's.
   const canPin = !everyone && (target.id === me.id || me.can("users.manage") || (me.can("team.view") && target.managerId === me.id));
 

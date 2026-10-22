@@ -1,0 +1,13 @@
+{
+  "prompt": "Who helped you this week, {name}?",
+  "viewOnly": "Your role can view the feed but not post.",
+  "chip.appreciation": "Appreciation",
+  "chip.announcement": "Announcement",
+  "shortcut": "{keys} to recognize from anywhere",
+  "cancel": "Cancel",
+  "announce.title": "New announcement",
+  "announce.placeholder": "Share news with everyone at the company…",
+  "announce.help": "Announcements appear in everyone's feed.",
+  "announce.post": "Post",
+  "announce.posted": "Announcement posted"
+}

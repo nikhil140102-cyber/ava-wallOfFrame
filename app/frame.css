@@ -1,7 +1,7 @@
 /*
  * Wall of Frames · v2 "Framed" visual layer
  * ------------------------------------------
- * The app *is* the frame: an ink wall holds the navigation, and every page sits on a
+ * The app *is* the frame: a wall (light mist by day, ink at night) holds the navigation, and every page sits on a
  * gallery-white canvas inset like a print, edged with a thin gold mat line.
  * One bold idea (the frame); everything inside stays quiet.
  *
@@ -16,11 +16,17 @@
 :root {
   --ink: #121a33;
   --ink-2: #1a2446;
-  --ink-text: rgba(236, 239, 250, 0.86);
-  --ink-muted: rgba(236, 239, 250, 0.52);
-  --ink-line: rgba(236, 239, 250, 0.09);
-  --ink-hover: rgba(236, 239, 250, 0.07);
-  --ink-icon: #98aaff;
+  /* The wall around the canvas — light mist in light mode, ink at night */
+  --wall: #e6e9f2;
+  --wall-strong: #121a33;
+  --wall-text: rgba(18, 26, 51, 0.82);
+  --wall-muted: rgba(18, 26, 51, 0.56);
+  --wall-line: rgba(18, 26, 51, 0.1);
+  --wall-hover: rgba(18, 26, 51, 0.06);
+  --wall-icon: #3355e6;
+  --wall-active: #ffffff;
+  --wall-glow-1: rgba(51, 85, 230, 0.12);
+  --wall-glow-2: rgba(200, 151, 58, 0.14);
   --frame-gold: #c8973a;
   --frame-gold-soft: rgba(200, 151, 58, 0.55);
   --bg: #f6f7fb;
@@ -33,6 +39,16 @@
   :root:not([data-theme="light"]) {
     --ink: #070b17;
     --ink-2: #111832;
+    --wall: #070b17;
+    --wall-strong: #ffffff;
+    --wall-text: rgba(236, 239, 250, 0.86);
+    --wall-muted: rgba(236, 239, 250, 0.52);
+    --wall-line: rgba(236, 239, 250, 0.09);
+    --wall-hover: rgba(236, 239, 250, 0.07);
+    --wall-icon: #98aaff;
+    --wall-active: rgba(236, 239, 250, 0.11);
+    --wall-glow-1: rgba(51, 85, 230, 0.22);
+    --wall-glow-2: rgba(200, 151, 58, 0.1);
     --bg: #0e1328;
     --bg-elevated: #161d38;
     --bg-grouped: #161d38;
@@ -44,6 +60,16 @@
 :root[data-theme="dark"] {
   --ink: #070b17;
   --ink-2: #111832;
+  --wall: #070b17;
+  --wall-strong: #ffffff;
+  --wall-text: rgba(236, 239, 250, 0.86);
+  --wall-muted: rgba(236, 239, 250, 0.52);
+  --wall-line: rgba(236, 239, 250, 0.09);
+  --wall-hover: rgba(236, 239, 250, 0.07);
+  --wall-icon: #98aaff;
+  --wall-active: rgba(236, 239, 250, 0.11);
+  --wall-glow-1: rgba(51, 85, 230, 0.22);
+  --wall-glow-2: rgba(200, 151, 58, 0.1);
   --bg: #0e1328;
   --bg-elevated: #161d38;
   --bg-grouped: #161d38;
@@ -54,12 +80,13 @@
 
 /* ── The frame ─────────────────────────────────────────────── */
 body {
-  background: var(--ink);
+  background: var(--wall);
 }
 .shell {
   background:
-    radial-gradient(900px 500px at -10% -10%, rgba(51, 85, 230, 0.22), transparent 60%),
-    radial-gradient(700px 400px at 0% 110%, rgba(200, 151, 58, 0.1), transparent 60%), var(--ink);
+    radial-gradient(900px 500px at -10% -10%, var(--wall-glow-1), transparent 60%),
+    radial-gradient(700px 400px at 0% 110%, var(--wall-glow-2), transparent 60%),
+    var(--wall);
 }
 .main {
   margin: var(--canvas-gap) var(--canvas-gap) var(--canvas-gap) 0;
@@ -83,13 +110,13 @@ body {
   padding: 18px 14px 14px;
 }
 .sidebar-brand b {
-  color: #fff;
+  color: var(--wall-strong);
   font-family: var(--font-display);
   font-size: 16px;
   letter-spacing: -0.01em;
 }
 .sidebar-brand span {
-  color: var(--ink-muted);
+  color: var(--wall-muted);
 }
 /* The logo is a tiny frame: paper mat, gold edge, ink W */
 .brand-mark {
@@ -103,14 +130,14 @@ body {
   font-weight: 800;
 }
 .sidebar-search {
-  background: var(--ink-hover);
-  color: var(--ink-muted);
-  border: 1px solid var(--ink-line);
+  background: var(--wall-hover);
+  color: var(--wall-muted);
+  border: 1px solid var(--wall-line);
 }
 .sidebar-search kbd {
   background: transparent;
-  color: var(--ink-muted);
-  border-color: var(--ink-line);
+  color: var(--wall-muted);
+  border-color: var(--wall-line);
 }
 .sidebar-cta {
   height: 40px;
@@ -118,42 +145,47 @@ body {
   box-shadow: 0 8px 20px -8px rgba(51, 85, 230, 0.8);
 }
 .nav-label {
-  color: var(--ink-muted);
+  color: var(--wall-muted);
   font-weight: 600;
   letter-spacing: 0.01em;
 }
 .nav-item {
-  color: var(--ink-text);
+  color: var(--wall-text);
   height: 36px;
   border-radius: 10px;
 }
 .nav-item svg {
-  color: var(--ink-icon);
+  color: var(--wall-icon);
 }
 .nav-item:hover {
-  background: var(--ink-hover);
+  background: var(--wall-hover);
 }
 .nav-item[aria-current="page"] {
-  background: rgba(236, 239, 250, 0.11);
-  color: #fff;
+  background: var(--wall-active);
+  color: var(--wall-strong);
   font-weight: 600;
   box-shadow: inset 2px 0 0 var(--frame-gold);
 }
 .nav-item[aria-current="page"] svg {
-  color: #fff;
+  color: var(--wall-strong);
+}
+:root:not([data-theme="dark"]) .nav-item[aria-current="page"] {
+  box-shadow:
+    inset 2px 0 0 var(--frame-gold),
+    0 1px 2px rgba(18, 26, 51, 0.08);
 }
 .sidebar-me {
-  border-top-color: var(--ink-line);
+  border-top-color: var(--wall-line);
 }
 .me-btn:hover {
-  background: var(--ink-hover);
+  background: var(--wall-hover);
 }
 .me-text b {
-  color: #fff;
+  color: var(--wall-strong);
 }
 .me-text > span,
 .me-btn > svg {
-  color: var(--ink-muted) !important;
+  color: var(--wall-muted) !important;
 }
 .sidebar .popover {
   color: var(--label);
@@ -310,15 +342,15 @@ body {
     min-height: 100vh;
   }
   .mobile-bar {
-    background: var(--ink);
-    color: #fff;
+    background: var(--wall);
+    color: var(--wall-strong);
     border-bottom: 1px solid var(--frame-gold-soft);
   }
   .mobile-bar .icon-btn {
-    color: #fff;
+    color: var(--wall-strong);
   }
   .sidebar {
-    background: var(--ink);
+    background: var(--wall);
   }
   .fotd {
     grid-template-columns: 1fr;
@@ -345,4 +377,26 @@ body {
   .fotd-frame {
     transform: none;
   }
+}
+
+/* ── Light / dark switch ───────────────────────────────────── */
+.theme-toggle {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wall-text);
+  background: var(--wall-hover);
+  border: 1px solid var(--wall-line);
+  transition: background 0.15s;
+}
+.theme-toggle:hover {
+  background: var(--wall-line);
+}
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

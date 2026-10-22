@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 import { HELP } from "@/lib/help";
+import { useI18n } from "@/components/I18nProvider";
 
 /** A small "?" in the page header that explains the page in plain words. */
 export function PageHelp({ topic }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const help = HELP[topic];
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!open) return;
@@ -25,17 +27,17 @@ export function PageHelp({ topic }) {
   if (!help) return null;
   return (
     <div className="page-help" ref={ref}>
-      <button className="help-btn" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="How this page works">
+      <button className="help-btn" onClick={() => setOpen(!open)} aria-expanded={open} aria-label={t("common.helpLabel")}>
         ?
       </button>
       {open && (
-        <div className="popover help-pop" role="dialog" aria-label={help.title}>
-          <b>{help.title}</b>
+        <div className="popover help-pop" role="dialog" aria-label={t(help.title)}>
+          <b>{t(help.title)}</b>
           <ul>
             {help.points.map((p) => (
               <li key={p}>
                 <Icon name="check" size={14} stroke={2.4} style={{ color: "var(--accent)", marginTop: 3 }} />
-                <span>{p}</span>
+                <span>{t(p)}</span>
               </li>
             ))}
           </ul>

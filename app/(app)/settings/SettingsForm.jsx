@@ -4,9 +4,12 @@ import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { useApp } from "@/components/shell/AppContext";
 import { changePassword, setPreferences, updateProfile } from "@/app/actions";
+import { useI18n } from "@/components/I18nProvider";
+import { LanguagePicker } from "@/components/LanguagePicker";
 
 export function SettingsForm({ profile, theme: initialTheme, emailNotifications, role, allowed }) {
   const { toast } = useApp();
+  const { t } = useI18n();
   const [p, setP] = useState(profile);
   const [saving, setSaving] = useState(false);
   const [theme, setTheme] = useState(initialTheme);
@@ -14,34 +17,34 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
   const [pw, setPw] = useState({ current: "", next: "" });
   const dirty = p.title !== profile.title || p.bio !== profile.bio || p.city !== profile.city;
 
-  function applyTheme(t) {
-    setTheme(t);
+  function applyTheme(next) {
+    setTheme(next);
     // Apply instantly — no reload, no save button.
-    if (t === "system") document.documentElement.removeAttribute("data-theme");
-    else document.documentElement.setAttribute("data-theme", t);
-    setPreferences({ theme: t });
+    if (next === "system") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", next);
+    setPreferences({ theme: next });
   }
 
   return (
     <div>
       <section className="group-block">
-        <div className="section-label">Profile</div>
+        <div className="section-label">{t("settings.profile.heading")}</div>
         <div className="group">
           <label className="group-item">
             <span style={{ width: 90 }} className="secondary">
-              Title
+              {t("settings.profile.title")}
             </span>
             <input className="inline-input" value={p.title} onChange={(e) => setP({ ...p, title: e.target.value })} maxLength={80} />
           </label>
           <label className="group-item">
             <span style={{ width: 90 }} className="secondary">
-              City
+              {t("settings.profile.city")}
             </span>
             <input className="inline-input" value={p.city} onChange={(e) => setP({ ...p, city: e.target.value })} maxLength={60} />
           </label>
           <label className="group-item" style={{ alignItems: "flex-start" }}>
             <span style={{ width: 90, paddingTop: 2 }} className="secondary">
-              Bio
+              {t("settings.profile.bio")}
             </span>
             <textarea
               className="inline-input"
@@ -49,14 +52,14 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
               value={p.bio}
               onChange={(e) => setP({ ...p, bio: e.target.value })}
               maxLength={240}
-              placeholder="A line or two about you"
+              placeholder={t("settings.profile.bioPlaceholder")}
             />
           </label>
         </div>
         <div className="row" style={{ justifyContent: "flex-end", marginTop: 10 }}>
           {dirty && (
             <button className="btn btn-plain" onClick={() => setP(profile)}>
-              Revert
+              {t("settings.profile.revert")}
             </button>
           )}
           <button
@@ -66,21 +69,21 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
               setSaving(true);
               const r = await updateProfile(p);
               setSaving(false);
-              toast(r.ok ? "Profile saved" : r.error, { tone: r.ok ? "default" : "error" });
+              toast(r.ok ? t("settings.profile.saved") : r.error, { tone: r.ok ? "default" : "error" });
             }}
           >
-            Save Profile
+            {t("settings.profile.save")}
           </button>
         </div>
       </section>
 
       <section className="group-block">
-        <div className="section-label">Appearance</div>
+        <div className="section-label">{t("settings.appearance.heading")}</div>
         <div className="theme-picker">
           {[
-            ["system", "Automatic", "monitor"],
-            ["light", "Light", "sun"],
-            ["dark", "Dark", "moon"],
+            ["system", t("settings.appearance.system"), "monitor"],
+            ["light", t("settings.appearance.light"), "sun"],
+            ["dark", t("settings.appearance.dark"), "moon"],
           ].map(([k, label, icon]) => (
             <button key={k} className="theme-option" aria-pressed={theme === k} onClick={() => applyTheme(k)}>
               <span className="theme-swatch" data-swatch={k}>
@@ -90,19 +93,27 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
             </button>
           ))}
         </div>
-        <p className="group-footer">Automatic follows your device&apos;s light or dark setting.</p>
+        <p className="group-footer">{t("settings.appearance.hint")}</p>
       </section>
 
       <section className="group-block">
-        <div className="section-label">Notifications</div>
+        <div className="section-label">{t("settings.language.heading")}</div>
+        <p className="group-footer" style={{ paddingTop: 0, marginBottom: 10 }}>
+          {t("settings.language.hint")}
+        </p>
+        <LanguagePicker signedIn variant="inline" />
+      </section>
+
+      <section className="group-block">
+        <div className="section-label">{t("settings.notifications.heading")}</div>
         <div className="group">
           <div className="group-item">
-            <span style={{ flex: 1 }}>Email me when I&apos;m recognised</span>
+            <span style={{ flex: 1 }}>{t("settings.notifications.email")}</span>
             <button
               className="switch"
               role="switch"
               aria-checked={email}
-              aria-label="Email notifications"
+              aria-label={t("settings.notifications.emailLabel")}
               onClick={() => {
                 setEmail(!email);
                 setPreferences({ emailNotifications: !email });
@@ -110,15 +121,15 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
             />
           </div>
         </div>
-        <p className="group-footer">In-app notifications are always on.</p>
+        <p className="group-footer">{t("settings.notifications.hint")}</p>
       </section>
 
       <section className="group-block">
-        <div className="section-label">Password</div>
+        <div className="section-label">{t("settings.password.heading")}</div>
         <div className="group">
           <label className="group-item">
             <span style={{ width: 120 }} className="secondary">
-              Current
+              {t("settings.password.current")}
             </span>
             <input
               className="inline-input"
@@ -130,7 +141,7 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
           </label>
           <label className="group-item">
             <span style={{ width: 120 }} className="secondary">
-              New
+              {t("settings.password.new")}
             </span>
             <input
               className="inline-input"
@@ -138,7 +149,7 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
               autoComplete="new-password"
               value={pw.next}
               onChange={(e) => setPw({ ...pw, next: e.target.value })}
-              placeholder="At least 8 characters"
+              placeholder={t("settings.password.hint")}
             />
           </label>
         </div>
@@ -148,20 +159,20 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
             disabled={!pw.current || pw.next.length < 8}
             onClick={async () => {
               const r = await changePassword(pw.current, pw.next);
-              toast(r.ok ? (r.message ?? "Saved") : r.error, { tone: r.ok ? "default" : "error" });
+              toast(r.ok ? (r.message ?? t("settings.password.saved")) : r.error, { tone: r.ok ? "default" : "error" });
               if (r.ok) setPw({ current: "", next: "" });
             }}
           >
-            Change Password
+            {t("settings.password.change")}
           </button>
         </div>
       </section>
 
       <section className="group-block">
-        <div className="section-label">Your access</div>
+        <div className="section-label">{t("settings.access.heading")}</div>
         <div className="group">
           <div className="group-item">
-            <span style={{ flex: 1 }}>Role</span>
+            <span style={{ flex: 1 }}>{t("settings.access.role")}</span>
             <span style={{ color: role.color, fontWeight: 600 }}>{role.name}</span>
           </div>
           {allowed.map((a) => (
@@ -171,7 +182,7 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
             </div>
           ))}
         </div>
-        <p className="group-footer">Roles are managed by your administrators. Ask HR if you need different access.</p>
+        <p className="group-footer">{t("settings.access.hint")}</p>
       </section>
     </div>
   );

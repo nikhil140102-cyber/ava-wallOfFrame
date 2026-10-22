@@ -6,9 +6,11 @@ import { Icon } from "./Icon";
 import { useApp } from "./shell/AppContext";
 import { discardImage, postAnnouncement } from "@/app/actions";
 import { ImagePicker } from "./ImagePicker";
+import { useI18n } from "./I18nProvider";
 
 export function HomeComposer() {
   const { data, can, openRecognize, toast } = useApp();
+  const { t, rich } = useI18n();
   const [mode, setMode] = useState("idle");
   const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
@@ -20,7 +22,7 @@ export function HomeComposer() {
       <div className="card card-pad stack" style={{ gap: 12 }}>
         <div className="row">
           <Avatar name={data.me.name} size={36} />
-          <b style={{ flex: 1 }}>New announcement</b>
+          <b style={{ flex: 1 }}>{t("composer.announce.title")}</b>
           <button
             className="btn btn-plain btn-sm"
             onClick={() => {
@@ -29,7 +31,7 @@ export function HomeComposer() {
               setMode("idle");
             }}
           >
-            Cancel
+            {t("composer.cancel")}
           </button>
         </div>
         <textarea
@@ -38,13 +40,13 @@ export function HomeComposer() {
           autoFocus
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Share news with everyone at the company…"
+          placeholder={t("composer.announce.placeholder")}
           maxLength={800}
         />
         <ImagePicker value={photos} onChange={setPhotos} onError={(m) => toast(m, { tone: "error" })} compact />
         <div className="row">
           <span className="caption" style={{ flex: 1 }}>
-            Announcements appear in everyone&apos;s feed.
+            {t("composer.announce.help")}
           </span>
           <button
             className="btn btn-filled"
@@ -60,10 +62,10 @@ export function HomeComposer() {
               setText("");
               setPhotos([]);
               setMode("idle");
-              toast("Announcement posted");
+              toast(t("composer.announce.posted"));
             }}
           >
-            Post
+            {t("composer.announce.post")}
           </button>
         </div>
       </div>
@@ -76,26 +78,32 @@ export function HomeComposer() {
         <Avatar name={data.me.name} size={40} />
         {can("recognition.give") ? (
           <button className="composer-prompt" onClick={() => openRecognize()}>
-            Who helped you this week, {first}?
+            {t("composer.prompt", { name: first })}
           </button>
         ) : (
-          <span className="secondary">Your role can view the feed but not post.</span>
+          <span className="secondary">{t("composer.viewOnly")}</span>
         )}
       </div>
       <div className="row" style={{ marginTop: 12, paddingLeft: 52, gap: 8, flexWrap: "wrap" }}>
         {can("recognition.give") && (
           <button className="chip" onClick={() => openRecognize()}>
-            <Icon name="sparkles" size={15} style={{ color: "var(--accent)" }} /> Appreciation
+            <Icon name="sparkles" size={15} style={{ color: "var(--accent)" }} /> {t("composer.chip.appreciation")}
           </button>
         )}
         {can("feed.announce") && (
           <button className="chip" onClick={() => setMode("announce")}>
-            <Icon name="megaphone" size={15} style={{ color: "var(--orange)" }} /> Announcement
+            <Icon name="megaphone" size={15} style={{ color: "var(--orange)" }} /> {t("composer.chip.announcement")}
           </button>
         )}
         <span className="caption" style={{ marginLeft: "auto", alignSelf: "center" }}>
-          <kbd className="kbd">⌘</kbd>
-          <kbd className="kbd">J</kbd> to recognize from anywhere
+          {rich(t("composer.shortcut"), {
+            keys: (
+              <>
+                <kbd className="kbd">⌘</kbd>
+                <kbd className="kbd">J</kbd>
+              </>
+            ),
+          })}
         </span>
       </div>
     </div>

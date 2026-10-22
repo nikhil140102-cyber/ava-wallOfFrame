@@ -11,27 +11,22 @@ import { celebrate } from "@/components/celebrate";
 import { addMemory, deleteMemory, discardImage } from "@/app/actions";
 import { Art, Peg, Polaroid } from "@/components/Polaroid";
 import { OnThisDay } from "@/components/OnThisDay";
+import { useI18n } from "@/components/I18nProvider";
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+// Labels come from memories.kind.<kind>; placeholders from wall.pin.placeholder.<kind>.
 const PIN_KINDS = [
-  {
-    kind: "skill",
-    label: "Skill learned",
-    icon: "book",
-    color: "#0D9488",
-    placeholder: "e.g. Figma variables, SQL basics, Public speaking",
-  },
-  { kind: "certification", label: "Certification", icon: "shield", color: "#4F46E5", placeholder: "e.g. Advanced Accessibility course" },
-  { kind: "achievement", label: "Achievement", icon: "trophy", color: "#CA8A04", placeholder: "e.g. Closed our biggest client deal" },
-  { kind: "moment", label: "Moment", icon: "heart", color: "#E11D48", placeholder: "e.g. Team offsite in Coorg" },
+  { kind: "skill", icon: "book", color: "#0D9488" },
+  { kind: "certification", icon: "shield", color: "#4F46E5" },
+  { kind: "achievement", icon: "trophy", color: "#CA8A04" },
+  { kind: "moment", icon: "heart", color: "#E11D48" },
 ];
 
 const first = (n) => n.split(" ")[0];
-const fmt = (ms, opts) => new Date(ms).toLocaleDateString("en-IN", opts);
 
 export function MemoryWall({ items, mode, target, meId, people, years, year, canPin, onThisDay = [] }) {
   const router = useRouter();
   const { toast } = useApp();
+  const { t, fmt, rich } = useI18n();
   const [open, setOpen] = useState(null);
   const [pinning, setPinning] = useState(false);
   const thisYear = new Date().getFullYear();
@@ -51,12 +46,17 @@ export function MemoryWall({ items, mode, target, meId, people, years, year, can
 
   const count = (k) => items.filter((i) => i.kind === k).length;
   const stats = [
-    ["Thank-yous", count("appreciation")],
-    ["Badges", count("badge")],
-    ["Skills & certificates", count("skill") + count("certification")],
-    ["Level-ups", count("level")],
-    ["Achievements", count("achievement")],
+    ["thankYous", count("appreciation")],
+    ["badges", count("badge")],
+    ["skills", count("skill") + count("certification")],
+    ["levelUps", count("level")],
+    ["achievements", count("achievement")],
   ].filter(([, n]) => n > 0);
+  // "{n} badges" → <b>3</b><span>badges</span>, in whatever word order the language uses.
+  const chip = (key, n) =>
+    rich(t(`wall.stats.${key}`, { count: n }), { n: <b>{fmt.num(n)}</b> }).map((part, i) =>
+      typeof part === "string" ? part.trim() ? <span key={`s${i}`}>{part.trim()}</span> : null : part
+    );
 
   function go(u, y = year) {
     const q = new URLSearchParams();
@@ -65,32 +65,31 @@ export function MemoryWall({ items, mode, target, meId, people, years, year, can
     router.push(`/wall${q.toString() ? `?${q}` : ""}`);
   }
 
-  const whose = everyone ? "Everyone’s" : mode === "mine" ? "Your" : `${first(target.name)}’s`;
+  const whoKey = everyone ? "all" : mode === "mine" ? "mine" : "person";
+  const whoParams = { year, name: first(target.name) };
 
   return (
     <main className="page memory-page">
       <header className="page-head">
         <div>
-          <h1 className="large-title">Memory Wall</h1>
-          <p>
-            {whose} {year} in frames — badges, thank-yous, skills and milestones, pinned automatically as they happen.
-          </p>
+          <h1 className="large-title">{t("wall.title")}</h1>
+          <p>{t(`wall.intro.${whoKey}`, whoParams)}</p>
         </div>
         <PageHelp topic="wall" />
         {canPin && (
           <button className="btn btn-filled" onClick={() => setPinning(true)}>
-            <Icon name="plus" size={16} /> Pin a Moment
+            <Icon name="plus" size={16} /> {t("wall.pinMoment")}
           </button>
         )}
       </header>
 
       <div className="toolbar">
-        <div className="segmented" role="tablist" aria-label="Whose wall">
+        <div className="segmented" role="tablist" aria-label={t("wall.tabs.label")}>
           <button role="tab" aria-selected={mode === "mine"} onClick={() => go(meId)}>
-            My Wall
+            {t("wall.tabs.mine")}
           </button>
           <button role="tab" aria-selected={everyone} onClick={() => go("all")}>
-            Everyone
+            {t("wall.tabs.everyone")}
           </button>
         </div>
         <select
@@ -98,16 +97,16 @@ export function MemoryWall({ items, mode, target, meId, people, years, year, can
           style={{ width: 220, height: 36 }}
           value={everyone ? "" : target.id}
           onChange={(e) => e.target.value && go(e.target.value)}
-          aria-label="Open someone’s wall"
+          aria-label={t("wall.picker.label")}
         >
-          {everyone && <option value="">Open someone’s wall…</option>}
+          {everyone && <option value="">{t("wall.picker.placeholder")}</option>}
           {people.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.id === meId ? `${p.name} (you)` : p.name}
+              {p.id === meId ? t("wall.picker.you", { name: p.name }) : p.name}
             </option>
           ))}
         </select>
-        <div className="segmented" role="tablist" aria-label="Year" style={{ marginLeft: "auto" }}>
+        <div className="segmented" role="tablist" aria-label={t("wall.yearLabel")} style={{ marginLeft: "auto" }}>
           {years.map((y) => (
             <button key={y} role="tab" aria-selected={y === year} onClick={() => go(everyone ? "all" : target.id, y)}>
               {y}
@@ -123,36 +122,24 @@ export function MemoryWall({ items, mode, target, meId, people, years, year, can
       )}
 
       {stats.length > 0 && (
-        <div className="wall-stats" aria-label="Year summary">
-          <div className="wall-total">
-            <b>{items.length}</b>
-            <span>{items.length === 1 ? "memory" : "memories"}</span>
-          </div>
-          {stats.map(([label, n]) => (
-            <div key={label}>
-              <b>{n}</b>
-              <span>{label}</span>
-            </div>
+        <div className="wall-stats" aria-label={t("wall.stats.label")}>
+          <div className="wall-total">{chip("memories", items.length)}</div>
+          {stats.map(([key, n]) => (
+            <div key={key}>{chip(key, n)}</div>
           ))}
         </div>
       )}
 
-      <section className="wall" aria-label={`${whose} memories for ${year}`}>
+      <section className="wall" aria-label={t(`wall.wallLabel.${whoKey}`, whoParams)}>
         {months.length === 0 && (
-          <Line label={year === thisYear ? "This year" : String(year)}>
-            <EmptyFrame
-              text={
-                mode === "mine"
-                  ? "Your first memory appears here when someone thanks you or you earn a badge."
-                  : "Nothing pinned this year yet."
-              }
-            />
-            <EmptyFrame text="Badges, level-ups and anniversaries hang here automatically." />
+          <Line label={year === thisYear ? t("wall.thisYear") : String(year)}>
+            <EmptyFrame text={mode === "mine" ? t("wall.empty.mine") : t("wall.empty.other")} />
+            <EmptyFrame text={t("wall.empty.auto")} />
             {canPin && <AddFrame onClick={() => setPinning(true)} />}
           </Line>
         )}
         {months.map(([m, list]) => (
-          <Line key={m} label={MONTHS[m]} count={list.length}>
+          <Line key={m} label={fmt.date(new Date(year, m, 1), { month: "long" })} count={list.length}>
             {canPin && year === thisYear && m === new Date().getMonth() && <AddFrame onClick={() => setPinning(true)} />}
             {list.map((it) => (
               <Polaroid key={it.id} item={it} showName={everyone} onOpen={() => setOpen(it)} />
@@ -170,7 +157,7 @@ export function MemoryWall({ items, mode, target, meId, people, years, year, can
             const r = await deleteMemory(open.memoryId);
             if (!r.ok) return toast(r.error, { tone: "error" });
             setOpen(null);
-            toast("Removed from the wall");
+            toast(t("wall.toast.removed"));
             router.refresh();
           }}
         />
@@ -184,7 +171,7 @@ export function MemoryWall({ items, mode, target, meId, people, years, year, can
           onDone={(title) => {
             setPinning(false);
             celebrate();
-            toast(`“${title}” pinned to the wall`);
+            toast(t("wall.toast.pinned", { title }));
             router.refresh();
           }}
         />
@@ -253,6 +240,7 @@ function EmptyFrame({ text }) {
 }
 
 function AddFrame({ onClick }) {
+  const { t } = useI18n();
   return (
     <button className="polaroid polaroid-add" style={{ "--tilt": "1.5deg" }} onClick={onClick}>
       <Peg />
@@ -262,7 +250,7 @@ function AddFrame({ onClick }) {
         </span>
       </span>
       <span className="pol-cap">
-        <span className="pol-title">Pin a skill, certificate or moment</span>
+        <span className="pol-title">{t("wall.addFrame")}</span>
       </span>
     </button>
   );
@@ -278,6 +266,7 @@ function useEscape(onClose) {
 
 function MemorySheet({ item, everyone, onClose, onRemove }) {
   useEscape(onClose);
+  const { t, fmt } = useI18n();
   const [confirm, setConfirm] = useState(false);
   return (
     <>
@@ -287,7 +276,7 @@ function MemorySheet({ item, everyone, onClose, onRemove }) {
           <span style={{ width: 60 }} />
           <h2 id="mem-title">{item.label}</h2>
           <button className="btn btn-plain" style={{ fontWeight: 700 }} onClick={onClose}>
-            Done
+            {t("common.done")}
           </button>
         </div>
         <div className="sheet-body">
@@ -307,7 +296,7 @@ function MemorySheet({ item, everyone, onClose, onRemove }) {
               </span>
               <h3 className="title-2">{item.title}</h3>
               <p className="secondary">
-                {fmt(item.at, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                {fmt.date(item.at, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                 {everyone && (
                   <>
                     {" "}
@@ -316,38 +305,41 @@ function MemorySheet({ item, everyone, onClose, onRemove }) {
                 )}
               </p>
               {item.subtitle && <p className="memory-sub">{item.subtitle}</p>}
-              {item.detail && <p className="memory-text">{item.detail}</p>}
-              {item.points > 0 && item.kind !== "level" && <span className="tag tag-orange">+{item.points} points</span>}
+              {item.detail && <p className="memory-text" dir="auto">{item.detail}</p>}
+              {item.points > 0 && item.kind !== "level" && (
+                <span className="tag tag-orange">{t("wall.sheet.points", { points: fmt.num(item.points) })}</span>
+              )}
               <div className="row" style={{ gap: 8, marginTop: 14, flexWrap: "wrap" }}>
                 {item.link && (
                   <Link className="btn btn-tinted btn-sm" href={item.link}>
-                    {item.link.startsWith("/posts") ? "Open post" : "Open"} <Icon name="chevronRight" size={13} />
+                    {item.link.startsWith("/posts") ? t("wall.sheet.openPost") : t("wall.sheet.open")}{" "}
+                    <Icon name="chevronRight" size={13} />
                   </Link>
                 )}
                 {everyone && (
                   <Link className="btn btn-gray btn-sm" href={`/wall?u=${item.userId}`}>
-                    {first(item.userName)}’s wall
+                    {t("wall.sheet.personWall", { name: first(item.userName) })}
                   </Link>
                 )}
                 {item.removable &&
                   (confirm ? (
                     <>
                       <button className="btn btn-sm btn-destructive" onClick={onRemove}>
-                        Remove from wall
+                        {t("wall.sheet.removeConfirm")}
                       </button>
                       <button className="btn btn-plain btn-sm" onClick={() => setConfirm(false)}>
-                        Keep
+                        {t("wall.sheet.keep")}
                       </button>
                     </>
                   ) : (
                     <button className="btn btn-plain btn-sm" style={{ color: "var(--red)" }} onClick={() => setConfirm(true)}>
-                      <Icon name="trash" size={13} /> Remove
+                      <Icon name="trash" size={13} /> {t("wall.sheet.remove")}
                     </button>
                   ))}
               </div>
               {item.kind !== "skill" && item.kind !== "certification" && item.kind !== "achievement" && item.kind !== "moment" && (
                 <p className="caption" style={{ marginTop: 14 }}>
-                  Pinned automatically.
+                  {t("wall.sheet.auto")}
                 </p>
               )}
             </div>
@@ -362,6 +354,7 @@ const toDateInput = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padSta
 
 function PinSheet({ target, isMe, year, onClose, onDone }) {
   const { toast } = useApp();
+  const { t, rich } = useI18n();
   useEscape(onClose);
   const today = new Date();
   const defaultDate = year === today.getFullYear() ? today : new Date(year, 11, 31);
@@ -406,22 +399,22 @@ function PinSheet({ target, isMe, year, onClose, onDone }) {
       <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="pin-title">
         <div className="sheet-head">
           <button className="btn btn-plain" onClick={close}>
-            Cancel
+            {t("common.cancel")}
           </button>
-          <h2 id="pin-title">Pin a Moment</h2>
+          <h2 id="pin-title">{t("wall.pinMoment")}</h2>
           <button className="btn btn-plain" style={{ fontWeight: 700 }} disabled={title.trim().length < 2 || pending} onClick={save}>
-            Pin
+            {t("wall.pin.pin")}
           </button>
         </div>
         <div className="sheet-body stack" style={{ gap: 18 }}>
           {!isMe && (
             <p className="caption" style={{ margin: 0 }}>
-              Pinning to <b>{target.name}</b>’s wall. They’ll get a notification.
+              {rich(t("wall.pin.forSomeone"), { name: <b>{target.name}</b> })}
             </p>
           )}
           <div>
-            <span className="rec-label">What kind of moment?</span>
-            <div className="pin-kinds" role="radiogroup" aria-label="Kind">
+            <span className="rec-label">{t("wall.pin.kindQuestion")}</span>
+            <div className="pin-kinds" role="radiogroup" aria-label={t("wall.pin.kindLabel")}>
               {PIN_KINDS.map((x) => (
                 <button
                   key={x.kind}
@@ -434,29 +427,33 @@ function PinSheet({ target, isMe, year, onClose, onDone }) {
                   <span>
                     <Icon name={x.icon} size={18} />
                   </span>
-                  {x.label}
+                  {t(`memories.kind.${x.kind}`)}
                 </button>
               ))}
             </div>
           </div>
           <label>
             <span className="rec-label">
-              {kind === "skill" ? "What did you learn?" : kind === "certification" ? "Which certification?" : "What happened?"}
+              {kind === "skill"
+                ? t("wall.pin.titleSkill")
+                : kind === "certification"
+                  ? t("wall.pin.titleCertification")
+                  : t("wall.pin.titleOther")}
             </span>
             <input
               className="field"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={k.placeholder}
+              placeholder={t(`wall.pin.placeholder.${k.kind}`)}
               maxLength={80}
               autoFocus
             />
           </label>
           <label>
             <span className="rec-label">
-              A note to remember it by{" "}
+              {t("wall.pin.note")}{" "}
               <span className="tertiary" style={{ fontWeight: 400 }}>
-                — optional
+                {t("wall.pin.optional")}
               </span>
             </span>
             <textarea
@@ -465,12 +462,12 @@ function PinSheet({ target, isMe, year, onClose, onDone }) {
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
               maxLength={400}
-              placeholder="How it went, who helped, what's next…"
+              placeholder={t("wall.pin.notePlaceholder")}
             />
           </label>
           <div className="form-grid">
             <label>
-              <span className="rec-label">When</span>
+              <span className="rec-label">{t("wall.pin.when")}</span>
               <input
                 className="field"
                 type="date"
@@ -482,9 +479,9 @@ function PinSheet({ target, isMe, year, onClose, onDone }) {
             </label>
             <div>
               <span className="rec-label">
-                Photo{" "}
+                {t("wall.pin.photo")}{" "}
                 <span className="tertiary" style={{ fontWeight: 400 }}>
-                  — optional
+                  {t("wall.pin.optional")}
                 </span>
               </span>
               <ImagePicker value={photos} onChange={setPhotos} onError={(m) => toast(m, { tone: "error" })} max={1} compact />
@@ -493,28 +490,34 @@ function PinSheet({ target, isMe, year, onClose, onDone }) {
           <div className="group">
             <div className="group-item">
               <span style={{ flex: 1 }}>
-                Share in the feed
+                {t("wall.pin.share")}
                 <span className="caption" style={{ display: "block" }}>
-                  Colleagues can applaud and comment
+                  {t("wall.pin.shareHint")}
                 </span>
               </span>
               <button
                 className="switch"
                 role="switch"
                 aria-checked={share && !priv}
-                aria-label="Share in the feed"
+                aria-label={t("wall.pin.share")}
                 disabled={priv}
                 onClick={() => setShare(!share)}
               />
             </div>
             <div className="group-item">
               <span style={{ flex: 1 }}>
-                Only me
+                {t("wall.pin.private")}
                 <span className="caption" style={{ display: "block" }}>
-                  Hidden from others (HR can still see it)
+                  {t("wall.pin.privateHint")}
                 </span>
               </span>
-              <button className="switch" role="switch" aria-checked={priv} aria-label="Only me" onClick={() => setPriv(!priv)} />
+              <button
+                className="switch"
+                role="switch"
+                aria-checked={priv}
+                aria-label={t("wall.pin.private")}
+                onClick={() => setPriv(!priv)}
+              />
             </div>
           </div>
           {error && (
@@ -525,10 +528,10 @@ function PinSheet({ target, isMe, year, onClose, onDone }) {
         </div>
         <div className="sheet-foot">
           <span className="caption" style={{ flex: 1 }}>
-            Badges, thank-yous and level-ups are pinned for you automatically.
+            {t("wall.pin.footer")}
           </span>
           <button className="btn btn-filled" disabled={title.trim().length < 2 || pending} onClick={save}>
-            <Icon name="plus" size={15} /> {pending ? "Pinning…" : "Pin to Wall"}
+            <Icon name="plus" size={15} /> {pending ? t("wall.pin.pinning") : t("wall.pin.submit")}
           </button>
         </div>
       </div>

@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/Icon";
-import { formatDate } from "@/lib/format";
+import { useI18n } from "@/components/I18nProvider";
 import { useApp } from "@/components/shell/AppContext";
 import { awardBadge } from "@/app/actions";
 import { PageHelp } from "@/components/PageHelp";
 
 function AwardTo({ badge, onDone }) {
   const { data, can, toast } = useApp();
+  const { t } = useI18n();
   const [q, setQ] = useState("");
   const [pending, setPending] = useState(false);
   if (!can("badges.award")) return null;
@@ -22,11 +23,16 @@ function AwardTo({ badge, onDone }) {
   return (
     <div className="award-to">
       <div className="section-label" style={{ padding: "0 0 8px" }}>
-        Award this badge
+        {t("badges.award.heading")}
       </div>
       <label className="search">
         <Icon name="search" size={15} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a person" aria-label="Find a person to award" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t("badges.award.placeholder")}
+          aria-label={t("badges.award.searchLabel")}
+        />
       </label>
       {q &&
         options.map((p) => (
@@ -43,17 +49,19 @@ function AwardTo({ badge, onDone }) {
                 setPending(true);
                 const r = await awardBadge(p.id, badge.id, "");
                 setPending(false);
-                toast(r.ok ? `${badge.name} awarded to ${p.name.split(" ")[0]}` : r.error, { tone: r.ok ? "default" : "error" });
+                toast(r.ok ? t("badges.award.toast", { badge: badge.name, name: p.name.split(" ")[0] }) : r.error, {
+                  tone: r.ok ? "default" : "error",
+                });
                 if (r.ok) onDone();
               }}
             >
-              Award
+              {t("badges.award.button")}
             </button>
           </div>
         ))}
       {q && options.length === 0 && (
         <p className="caption" style={{ marginTop: 8 }}>
-          No one matches, or they already have it.
+          {t("badges.award.noMatch")}
         </p>
       )}
     </div>
@@ -61,6 +69,7 @@ function AwardTo({ badge, onDone }) {
 }
 
 export function BadgeBrowser({ badges, canManage }) {
+  const { t, fmt } = useI18n();
   const [show, setShow] = useState("all");
   const [open, setOpen] = useState(null);
   const earned = badges.filter((b) => b.earnedAt).length;
@@ -82,21 +91,19 @@ export function BadgeBrowser({ badges, canManage }) {
     <main className="page">
       <header className="page-head">
         <div>
-          <h1 className="large-title">Badges</h1>
-          <p>
-            You&apos;ve earned {earned} of {badges.length}. Badges add points and show on your profile.
-          </p>
+          <h1 className="large-title">{t("badges.title")}</h1>
+          <p>{t("badges.subtitle", { earned: fmt.num(earned), count: badges.length })}</p>
         </div>
         <PageHelp topic="badges" />
         {canManage && (
           <Link href="/admin/badges" className="btn btn-tinted">
-            <Icon name="pencil" size={15} /> Manage Badges
+            <Icon name="pencil" size={15} /> {t("badges.manage")}
           </Link>
         )}
         <div className="segmented" role="tablist">
           {["all", "earned", "locked"].map((k) => (
             <button key={k} role="tab" aria-selected={show === k} onClick={() => setShow(k)}>
-              {k[0].toUpperCase() + k.slice(1)}
+              {t(`badges.filter.${k}`)}
             </button>
           ))}
         </div>
@@ -119,9 +126,7 @@ export function BadgeBrowser({ badges, canManage }) {
               <h2 className="title-3" style={{ flex: 1 }}>
                 {cat}
               </h2>
-              <span className="caption num">
-                {got} / {total}
-              </span>
+              <span className="caption num">{t("badges.categoryProgress", { got: fmt.num(got), total: fmt.num(total) })}</span>
             </div>
             <div className="badge-grid">
               {list.map((b) => (
@@ -132,8 +137,8 @@ export function BadgeBrowser({ badges, canManage }) {
                   <b>{b.name}</b>
                   <span className="caption">
                     {b.earnedAt
-                      ? `Earned ${formatDate(b.earnedAt)}`
-                      : `${b.holders.length} ${b.holders.length === 1 ? "person has" : "people have"} it`}
+                      ? t("badges.earnedOn", { date: fmt.date(b.earnedAt) })
+                      : t("badges.holdersCount", { count: b.holders.length })}
                   </span>
                 </button>
               ))}
@@ -157,7 +162,7 @@ export function BadgeBrowser({ badges, canManage }) {
                 className="icon-btn"
                 style={{ position: "absolute", top: 12, right: 12 }}
                 onClick={() => setOpen(null)}
-                aria-label="Close"
+                aria-label={t("common.close")}
               >
                 <Icon name="x" size={18} />
               </button>
@@ -183,24 +188,24 @@ export function BadgeBrowser({ badges, canManage }) {
               {open.criteria && (
                 <div className="how-to-earn">
                   <span className="caption" style={{ fontWeight: 600 }}>
-                    How to earn it
+                    {t("badges.howToEarn")}
                   </span>
                   <p>{open.criteria}</p>
                 </div>
               )}
               <div className="row" style={{ justifyContent: "center", marginTop: 12, gap: 8, flexWrap: "wrap" }}>
                 <span className="tag">{open.category}</span>
-                <span className="tag tag-orange">+{open.points} points</span>
+                <span className="tag tag-orange">{t("badges.pointsTag", { count: open.points, n: fmt.num(open.points) })}</span>
                 {open.earnedAt ? (
-                  <span className="tag tag-green">Earned {formatDate(open.earnedAt)}</span>
+                  <span className="tag tag-green">{t("badges.earnedOn", { date: fmt.date(open.earnedAt) })}</span>
                 ) : (
-                  <span className="tag">Not earned yet</span>
+                  <span className="tag">{t("badges.notEarned")}</span>
                 )}
-                {!open.active && <span className="tag tag-red">Retired</span>}
+                {!open.active && <span className="tag tag-red">{t("badges.retired")}</span>}
               </div>
               <div style={{ textAlign: "left", marginTop: 24 }}>
                 <div className="section-label" style={{ padding: "0 0 8px" }}>
-                  {open.holders.length ? `Held by ${open.holders.length}` : "No one has this yet"}
+                  {open.holders.length ? t("badges.heldBy", { count: open.holders.length }) : t("badges.noHolders")}
                 </div>
                 {open.holders.map((h) => (
                   <Link key={h.id} href={`/people/${h.id}`} className="rail-row">
@@ -213,7 +218,7 @@ export function BadgeBrowser({ badges, canManage }) {
                 ))}
                 {!open.earnedAt && (
                   <p className="caption" style={{ marginTop: 12 }}>
-                    Managers award badges, and some can be attached to an appreciation. Keep doing great work — it&apos;s noticed.
+                    {t("badges.keepGoing")}
                   </p>
                 )}
               </div>
