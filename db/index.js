@@ -4,7 +4,12 @@ import * as schema from "./schema";
 
 // Local development: a SQLite file (file:./data/app.db).
 // Vercel / production: a hosted Turso (libSQL) database — set DATABASE_URL (libsql://…) and DATABASE_AUTH_TOKEN.
-const url = (process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL) ?? "file:./data/app.db";
+const configured = process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL;
+// While `next build` runs, nothing is read from the database. A Preview build (e.g. a Dependabot update) may have
+// no database settings at all, so it builds against a placeholder address that is never contacted.
+const building = process.env.NEXT_PHASE === "phase-production-build";
+const placeholder = building && process.env.VERCEL && !configured?.startsWith("libsql:") && !configured?.startsWith("http");
+const url = placeholder ? "libsql://database-not-configured.invalid" : (configured ?? "file:./data/app.db");
 const isFile = url.startsWith("file:");
 
 if (isFile && process.env.VERCEL) {

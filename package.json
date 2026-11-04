@@ -2,7 +2,7 @@
   "name": "wall-of-frames",
   "version": "1.0.0",
   "private": true,
-  "description": "AvaZone Wall of Frames — internal recognition platform",
+  "description": "AvaZone Wall of Frames \u2014 internal recognition platform",
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/i18n-merge.mjs && next build",
@@ -47,6 +47,6 @@
     "tsx": "^4.23.15"
   },
   "engines": {
-    "node": ">=20.12"
+    "node": ">=20.12 <25"
   }
 }

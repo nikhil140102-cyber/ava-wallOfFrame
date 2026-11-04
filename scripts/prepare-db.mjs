@@ -14,6 +14,13 @@ try {
   process.loadEnvFile(".env.local");
 } catch {}
 
+// Preview builds (Dependabot updates, test branches) never touch the database: they could otherwise change
+// the live tables from code that hasn't been merged yet. They only check that the app still builds.
+if (process.env.VERCEL_ENV === "preview") {
+  console.log("→ Preview build: skipping the database step (only Production deployments update the database).");
+  process.exit(0);
+}
+
 const url = (process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL) ?? "";
 const missing = [];
 if (!url || url.startsWith("file:"))
