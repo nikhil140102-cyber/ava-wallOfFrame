@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { DEMO_MODE } from "@/lib/security";
 import { LoginForm } from "./LoginForm";
 import { getI18n } from "@/lib/i18n/server";
 
@@ -10,6 +11,5 @@ export async function generateMetadata() {
 
 export default async function LoginPage() {
   if (await getCurrentUser()) redirect("/home");
-  const demo = process.env.NODE_ENV !== "production" || process.env.SHOW_DEMO_ACCOUNTS === "true";
-  return <LoginForm demo={demo} />;
+  return <LoginForm demo={DEMO_MODE} />;
 }

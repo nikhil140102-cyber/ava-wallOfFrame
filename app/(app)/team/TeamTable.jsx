@@ -67,7 +67,7 @@ export function TeamTable({ rows, canNudge, canAward }) {
                 {fmt.num(r.received)}
               </td>
               <td className="caption">
-                {r.lastRecognised ? fmt.timeAgo(r.lastRecognised) : <span style={{ color: "var(--orange)" }}>{t("team.never")}</span>}
+                {r.lastRecognised ? <time suppressHydrationWarning>{fmt.timeAgo(r.lastRecognised)}</time> : <span style={{ color: "var(--orange)" }}>{t("team.never")}</span>}
               </td>
               <td>
                 <div className="row" style={{ gap: 6, justifyContent: "flex-end" }}>

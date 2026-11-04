@@ -1,0 +1,15 @@
+# GitHub checks the app's packages every week and opens a pull request when a fix is available.
+# Security alerts also need: GitHub repo → Settings → Code security → Dependabot alerts (turn on).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Kolkata
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]

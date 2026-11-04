@@ -23,6 +23,7 @@ const uid = () => crypto.randomUUID();
 async function main() {
   // Clear in dependency order so the seed can be re-run.
   for (const t of [
+    s.securityEvents,
     s.memories,
     s.auditLogs,
     s.reports,
@@ -204,7 +205,11 @@ async function main() {
   ]);
 
   // ---------- People ----------
-  const hash = await bcrypt.hash("avazone123", 10);
+  // Local demo: everyone shares "avazone123". On a live deployment prepare-db passes a random DEMO_PASSWORD
+  // instead, and everyone must pick their own password the first time they sign in.
+  const demoPassword = process.env.DEMO_PASSWORD || "avazone123";
+  const mustChangePassword = Boolean(process.env.DEMO_PASSWORD);
+  const hash = await bcrypt.hash(demoPassword, 10);
 
   const people = [
     {
@@ -399,6 +404,7 @@ async function main() {
       name: p.name,
       email: p.email,
       passwordHash: hash,
+      mustChangePassword,
       title: p.title,
       bio: p.bio ?? "",
       city: p.city,
@@ -862,7 +868,11 @@ async function main() {
     { actorId: u["priya"], action: "Edited details", target: "Arjun Rao: phone, birthday", createdAt: ago(19) },
   ]);
 
-  console.log(`Seeded ${people.length} people. Log in with any email above and password "avazone123".`);
+  console.log(
+    process.env.DEMO_PASSWORD
+      ? `Seeded ${people.length} people. Their one-time password is in the line above; each person must choose their own on first sign-in.`
+      : `Seeded ${people.length} people. Log in with any email above and password "avazone123".`
+  );
 }
 
 main()

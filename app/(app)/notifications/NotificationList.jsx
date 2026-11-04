@@ -131,7 +131,7 @@ export function NotificationList({ items }) {
                   </span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: "block", fontSize: 14.5, fontWeight: n.read ? 400 : 600, lineHeight: 1.4 }}>{n.title}</span>
-                    <span className="caption">{fmt.timeAgo(n.createdAt)}</span>
+                    <time className="caption" suppressHydrationWarning>{fmt.timeAgo(n.createdAt)}</time>
                   </span>
                   {!n.read && (
                     <span className="dot" style={{ background: "var(--accent)", marginTop: 6 }} aria-label={t("notifications.unread")} />

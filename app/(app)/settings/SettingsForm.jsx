@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { useApp } from "@/components/shell/AppContext";
-import { changePassword, setPreferences, updateProfile } from "@/app/actions";
+import { changePassword, setPreferences, signOutEverywhere, updateProfile } from "@/app/actions";
 import { useI18n } from "@/components/I18nProvider";
 import { LanguagePicker } from "@/components/LanguagePicker";
 
@@ -156,7 +156,7 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
         <div className="row" style={{ justifyContent: "flex-end", marginTop: 10 }}>
           <button
             className="btn"
-            disabled={!pw.current || pw.next.length < 8}
+            disabled={!pw.current || pw.next.length < 10}
             onClick={async () => {
               const r = await changePassword(pw.current, pw.next);
               toast(r.ok ? (r.message ?? t("settings.password.saved")) : r.error, { tone: r.ok ? "default" : "error" });
@@ -165,6 +165,25 @@ export function SettingsForm({ profile, theme: initialTheme, emailNotifications,
           >
             {t("settings.password.change")}
           </button>
+        </div>
+        <p className="group-footer">{t("settings.password.rules")}</p>
+        <div className="group" style={{ marginTop: 16 }}>
+          <div className="group-item">
+            <span style={{ flex: 1 }}>
+              {t("settings.devices.title")}
+              <br />
+              <span className="secondary footnote">{t("settings.devices.hint")}</span>
+            </span>
+            <button
+              className="btn"
+              onClick={async () => {
+                const r = await signOutEverywhere();
+                toast(r.ok ? t("settings.devices.done") : r.error, { tone: r.ok ? "default" : "error" });
+              }}
+            >
+              {t("settings.devices.button")}
+            </button>
+          </div>
         </div>
       </section>
 

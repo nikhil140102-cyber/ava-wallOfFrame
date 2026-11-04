@@ -9,6 +9,17 @@ import { z } from "zod";
 import { db, schema as s } from "@/db";
 import { assertPermission, getCurrentUser } from "@/lib/auth";
 import { createSession, destroySession } from "@/lib/session";
+import {
+  DEMO_MODE,
+  DUMMY_HASH,
+  PASSWORD_MAX,
+  clearLoginFailures,
+  clientIp,
+  logSecurity,
+  loginWaitMs,
+  passwordProblem,
+  temporaryPassword,
+} from "@/lib/security";
 import { getGivenThisMonth, getPoints, getSettings } from "@/lib/queries";
 import { isPermission, SUPER_ADMIN_ONLY } from "@/lib/permissions";
 import { isLocale } from "@/lib/i18n/locales";
@@ -22,6 +33,7 @@ async function audit(actorId, action, target = "") {
 async function me() {
   const u = await getCurrentUser();
   if (!u) throw new Error("You need to sign in again.");
+  if (u.mustChangePassword) throw new Error("Choose a new password first.");
   return u;
 }
 
@@ -46,26 +58,48 @@ async function usersWith(permission) {
   return rows.map((r) => r.id);
 }
 
-function tempPassword() {
-  const words = ["maple", "river", "orbit", "cedar", "ember", "lumen", "pixel", "harbor"];
-  return `${words[Math.floor(Math.random() * words.length)]}-${Math.floor(1000 + Math.random() * 9000)}`;
-}
 
 // ---------------------------------------------------------------- Auth
 
 export async function login(_, form) {
   const email = String(form.get("email") ?? "")
     .trim()
-    .toLowerCase();
-  const password = String(form.get("password") ?? "");
-  const user = await db.select().from(s.users).where(eq(s.users.email, email)).get();
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    .toLowerCase()
+    .slice(0, 200);
+  const password = String(form.get("password") ?? "").slice(0, PASSWORD_MAX);
+  const ip = await clientIp();
+
+  // Too many wrong tries for this email (or from this network) in the last 15 minutes → wait.
+  const wait = await loginWaitMs(email, ip);
+  if (wait) {
+    await logSecurity("login_blocked", { email, ip });
+    const mins = Math.ceil(wait / 60000);
+    return { ok: false, error: `Too many tries. Please wait ${mins} minute${mins === 1 ? "" : "s"} and try again, or ask HR to reset your password.` };
+  }
+
+  const user = email ? await db.select().from(s.users).where(eq(s.users.email, email)).get() : null;
+  // Always run bcrypt (against a dummy hash for unknown emails) so the reply time doesn't reveal who has an account.
+  const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
+  if (!user || !ok) {
+    await logSecurity("login_failed", { email, userId: user?.id ?? null, ip });
+    if (user && (await loginWaitMs(email, ""))) {
+      await logSecurity("login_locked", { email, userId: user.id, ip, detail: "5 wrong passwords in 15 minutes" });
+      await audit(null, "Sign-in paused after 5 wrong passwords", user.name);
+    }
     return { ok: false, error: "That email and password don't match." };
   }
   if (!user.active) return { ok: false, error: "This account has been deactivated. Contact HR." };
-  await createSession(user.id);
-  await db.update(s.users).set({ lastSeenAt: new Date() }).where(eq(s.users.id, user.id));
-  redirect("/home");
+
+  await clearLoginFailures(email);
+  // A weak password (e.g. the old shared demo password) must be replaced before using the live app.
+  const mustChange = user.mustChangePassword || (!DEMO_MODE && passwordProblem(password, user) !== null);
+  await db
+    .update(s.users)
+    .set({ lastSeenAt: new Date(), ...(mustChange && !user.mustChangePassword ? { mustChangePassword: true } : {}) })
+    .where(eq(s.users.id, user.id));
+  await createSession(user.id, user.sessionVersion ?? 0);
+  await logSecurity("login_ok", { email, userId: user.id, ip });
+  redirect(mustChange ? "/change-password" : "/home");
 }
 
 export async function logout() {
@@ -513,13 +547,14 @@ export async function inviteUser(input) {
     await guardRoleAssignment(actor, data.roleId);
     const exists = await db.select().from(s.users).where(eq(s.users.email, data.email)).get();
     if (exists) throw new Error("Someone with that email already exists.");
-    const password = tempPassword();
+    const password = temporaryPassword();
     const id = crypto.randomUUID();
     await db.insert(s.users).values({
       ...data,
       id,
       joinedAt: joinedAt ? new Date(joinedAt) : new Date(),
       passwordHash: await bcrypt.hash(password, 10),
+      mustChangePassword: true,
     });
     await audit(actor.id, "Invited user", data.name);
     const welcomed = await grantWelcome(id);
@@ -564,6 +599,7 @@ export async function updateUser(id, input) {
     if (input.active !== undefined && input.active !== target.active) {
       if (id === actor.id) throw new Error("You can't deactivate yourself.");
       patch.active = input.active;
+      if (!input.active) patch.sessionVersion = (target.sessionVersion ?? 0) + 1;
       await audit(actor.id, input.active ? "Reactivated user" : "Deactivated user", target.name);
     }
 
@@ -600,12 +636,18 @@ export async function resetPassword(id) {
     const actor = await assertPermission("users.manage");
     const target = await db.select().from(s.users).where(eq(s.users.id, id)).get();
     if (!target) throw new Error("User not found.");
-    const password = tempPassword();
+    const password = temporaryPassword();
     await db
       .update(s.users)
-      .set({ passwordHash: await bcrypt.hash(password, 10) })
+      .set({
+        passwordHash: await bcrypt.hash(password, 10),
+        mustChangePassword: true,
+        // Signs them out everywhere: whoever had their old password loses access now.
+        sessionVersion: (target.sessionVersion ?? 0) + 1,
+      })
       .where(eq(s.users.id, id));
     await audit(actor.id, "Reset password", target.name);
+    await logSecurity("password_reset", { email: target.email, userId: target.id, ip: await clientIp(), detail: `by ${actor.name}` });
     return { ok: true, data: { password } };
   } catch (e) {
     return fail(e);
@@ -834,15 +876,44 @@ export async function setPreferences(input) {
 
 export async function changePassword(current, next) {
   try {
-    const user = await me();
+    // Uses getCurrentUser (not me()) because people who must change their password can still do this.
+    const user = await getCurrentUser();
+    if (!user) throw new Error("You need to sign in again.");
+    const ip = await clientIp();
+    if (await loginWaitMs(user.email, "")) throw new Error("Too many wrong tries. Please wait 15 minutes and try again.");
     const row = await db.select().from(s.users).where(eq(s.users.id, user.id)).get();
-    if (!row || !(await bcrypt.compare(current, row.passwordHash))) throw new Error("Your current password isn't right.");
-    z.string().min(8, "Use at least 8 characters.").parse(next);
+    if (!row || !(await bcrypt.compare(String(current ?? "").slice(0, PASSWORD_MAX), row.passwordHash))) {
+      await logSecurity("login_failed", { email: user.email, userId: user.id, ip, detail: "wrong current password" });
+      throw new Error("Your current password isn't right.");
+    }
+    const problem = passwordProblem(next, row);
+    if (problem) throw new Error(problem);
+    if (await bcrypt.compare(next, row.passwordHash)) throw new Error("Pick a password that's different from your current one.");
+    const sessionVersion = (row.sessionVersion ?? 0) + 1;
     await db
       .update(s.users)
-      .set({ passwordHash: await bcrypt.hash(next, 10) })
+      .set({ passwordHash: await bcrypt.hash(next, 10), mustChangePassword: false, sessionVersion, passwordChangedAt: new Date() })
       .where(eq(s.users.id, user.id));
-    return { ok: true, message: "Password changed." };
+    // Every other device is signed out; this one gets a fresh sign-in.
+    await createSession(user.id, sessionVersion);
+    await logSecurity("password_changed", { email: user.email, userId: user.id, ip });
+    revalidatePath("/", "layout");
+    return { ok: true, message: "Password changed. You've been signed out on your other devices." };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Settings → "Sign out on all other devices". */
+export async function signOutEverywhere() {
+  try {
+    const user = await me();
+    const row = await db.select({ v: s.users.sessionVersion }).from(s.users).where(eq(s.users.id, user.id)).get();
+    const sessionVersion = (row?.v ?? 0) + 1;
+    await db.update(s.users).set({ sessionVersion }).where(eq(s.users.id, user.id));
+    await createSession(user.id, sessionVersion);
+    await logSecurity("sessions_revoked", { email: user.email, userId: user.id, ip: await clientIp() });
+    return { ok: true, message: "Signed out on all your other devices." };
   } catch (e) {
     return fail(e);
   }

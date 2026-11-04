@@ -16,7 +16,7 @@ npm run setup      # creates .env.local, the database, and sample company data
 npm run dev        # http://localhost:3000
 ```
 
-Sign in with any demo account. The password for all of them is **`avazone123`**.
+Sign in with any demo account. On your own computer the password for all of them is **`avazone123`** (live deployments get a random one-time password instead — see Security).
 
 | Account | Role | What to try |
 |---|---|---|
@@ -62,7 +62,7 @@ The build runs `npm run vercel-build`, which does three things:
 
 1. Checks the variables above. If any are missing, the build stops and tells you which ones to add.
 2. Creates or updates the tables in your database.
-3. On the very first deploy only, loads the demo company. Every demo account's password is `avazone123`. Later deploys never touch your data.
+3. On the very first deploy only, loads the demo company with a random one-time password shown once in the build log (everyone must choose their own at first sign-in). Later deploys never touch your data.
 
 **Common problems**
 
@@ -276,9 +276,22 @@ lib/
   uploads.js             saving, attaching and cleaning up post photos (stored in the database)
 ```
 
-### Security notes
+### Security
 
-- Passwords are hashed with bcrypt. Sessions are signed JWTs in `httpOnly`, `sameSite=lax` cookies, and are `secure` in production.
-- Every page checks permissions on the server (`requirePermission`), and so does every server action (`assertPermission`). Hiding a button in the UI is never the only protection.
-- Input is validated with zod on the server.
-- Deactivated users can't sign in, and their existing sessions stop working on the next request.
+**Before going live**
+
+- `SESSION_SECRET` must be 32+ random characters (`node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`). Changing it signs everyone out.
+- Do **not** set `SHOW_DEMO_ACCOUNTS=true` on a real company's site.
+- On a live deployment the demo accounts get a random one-time password (printed once in the Vercel build log), never `avazone123`. Set `SEED_DEMO_DATA=false` to skip the demo company.
+
+**What the app does**
+
+- Passwords: bcrypt-hashed; 10+ characters mixing letters with numbers or symbols (or a 16+ character phrase); common passwords, the company name, and the person's own name or email are refused.
+- One-time passwords from HR (invite / reset) are 12 random characters from the secure generator, and the person must choose their own password before they can use the app. So does anyone who signs in with a weak password (e.g. the old demo password).
+- Sign-in limit: 5 wrong passwords for an email (or 30 from one network) in 15 minutes pauses sign-in for that email for 15 minutes. Unknown emails take as long and get the same message as a wrong password.
+- Sessions: signed cookie (`httpOnly`, `SameSite=Lax`, `Secure` in production), 7 days, renewed daily while in use (`proxy.js`). Changing or resetting a password, deactivating someone, or Settings → "Sign out other devices" ends every other sign-in at once.
+- Permissions are checked on the server for every page (`requirePermission`) and action (`assertPermission`); denied actions are logged.
+- Security headers on every page: Content-Security-Policy, `X-Frame-Options: DENY`, HSTS, `Referrer-Policy`, `Permissions-Policy`, `nosniff`.
+- Photos: real file type checked from the bytes, 4 MB limit enforced on the server, GPS / camera / comment metadata removed before saving, served only to signed-in people.
+- Sign-in activity (failed, paused, successful sign-ins, password changes, denied actions) is kept for 90 days in the `security_events` table and written to the server log (`[security] …` in Vercel → Logs). Paused sign-ins also appear in Admin → Audit log.
+- Dependencies: `.github/dependabot.yml` asks GitHub for weekly update pull requests. Run `npm audit --omit=dev` before each release.

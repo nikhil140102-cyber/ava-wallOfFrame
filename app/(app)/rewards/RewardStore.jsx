@@ -124,7 +124,7 @@ export function RewardStore({ balance, lifetime, canRedeem, rewards, history }) 
                 <span style={{ flex: 1 }}>
                   <b style={{ fontSize: 14 }}>{h.name}</b>
                   <span className="caption" style={{ display: "block" }}>
-                    {t("rewards.cost", { n: fmt.num(h.cost) })} · {fmt.timeAgo(h.createdAt)}
+                    {t("rewards.cost", { n: fmt.num(h.cost) })} · <time suppressHydrationWarning>{fmt.timeAgo(h.createdAt)}</time>
                     {h.note ? ` · “${h.note}”` : ""}
                   </span>
                 </span>

@@ -55,8 +55,30 @@ export const users = sqliteTable(
     emailNotifications: integer("email_notifications", { mode: "boolean" }).notNull().default(true),
     joinedAt: integer("joined_at", { mode: "timestamp_ms" }).notNull().default(now),
     lastSeenAt: integer("last_seen_at", { mode: "timestamp_ms" }),
+    /** Set after an invite, a reset or a weak password: the person must pick a new password before using the app. */
+    mustChangePassword: integer("must_change_password", { mode: "boolean" }).notNull().default(false),
+    /** Bumped on password change/reset/deactivation — every older sign-in cookie stops working. */
+    sessionVersion: integer("session_version").notNull().default(0),
+    passwordChangedAt: integer("password_changed_at", { mode: "timestamp_ms" }),
   },
   (t) => [index("users_manager_idx").on(t.managerId)]
+);
+
+/** Sign-in activity: failed / blocked / successful sign-ins and denied actions. Used for the sign-in limit and the Security log. */
+export const securityEvents = sqliteTable(
+  "security_events",
+  {
+    id: id(),
+    kind: text("kind", {
+      enum: ["login_ok", "login_failed", "login_blocked", "login_locked", "password_changed", "password_reset", "permission_denied", "sessions_revoked"],
+    }).notNull(),
+    email: text("email").notNull().default(""),
+    userId: text("user_id"),
+    ip: text("ip").notNull().default(""),
+    detail: text("detail").notNull().default(""),
+    createdAt: createdAt(),
+  },
+  (t) => [index("security_email_idx").on(t.email, t.createdAt), index("security_ip_idx").on(t.ip, t.createdAt)]
 );
 
 export const levels = sqliteTable("levels", {

@@ -134,7 +134,7 @@ export function PostCard({ post, expanded = false }) {
           <div className={styles.headline}>{headline}</div>
           <div className="caption">
             <Link href={`/posts/${post.id}`} className={styles.time}>
-              {fmt.timeAgo(post.createdAt)}
+              <time suppressHydrationWarning>{fmt.timeAgo(post.createdAt)}</time>
             </Link>
             {post.author.title && ` · ${post.author.title}`}
           </div>
@@ -273,7 +273,7 @@ export function PostCard({ post, expanded = false }) {
                   <Link href={`/people/${c.author.id}`} className={styles.name}>
                     {c.author.name}
                   </Link>{" "}
-                  <span className="caption">{fmt.timeAgo(c.createdAt)}</span>
+                  <time className="caption" suppressHydrationWarning>{fmt.timeAgo(c.createdAt)}</time>
                 </div>
                 <p dir="auto">{c.body}</p>
               </div>

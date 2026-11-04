@@ -22,10 +22,15 @@
   "password.heading": "Password",
   "password.current": "Current",
   "password.new": "New",
-  "password.hint": "At least 8 characters",
+  "password.hint": "At least 10 characters",
   "password.saved": "Saved",
   "password.change": "Change Password",
   "access.heading": "Your access",
   "access.role": "Role",
-  "access.hint": "Roles are managed by your administrators. Ask HR if you need different access."
+  "access.hint": "Roles are managed by your administrators. Ask HR if you need different access.",
+  "password.rules": "Use 10 or more characters, mixing letters with numbers or symbols. Changing it signs you out on your other devices.",
+  "devices.title": "Signed in somewhere else?",
+  "devices.hint": "Sign out on every other phone and computer — useful after using a shared device.",
+  "devices.button": "Sign out other devices",
+  "devices.done": "Signed out on all your other devices."
 }
