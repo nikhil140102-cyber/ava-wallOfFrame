@@ -205,8 +205,8 @@ async function main() {
   ]);
 
   // ---------- People ----------
-  // Local demo: everyone shares "avazone123". On a live deployment prepare-db passes a random DEMO_PASSWORD
-  // instead, and everyone must pick their own password the first time they sign in.
+  // Local demo: everyone shares "avazone123". On a live deployment prepare-db sets DEMO_PASSWORD
+  // (avazone123 unless you chose another) and everyone must pick their own password at first sign-in.
   const demoPassword = process.env.DEMO_PASSWORD || "avazone123";
   const mustChangePassword = Boolean(process.env.DEMO_PASSWORD);
   const hash = await bcrypt.hash(demoPassword, 10);
@@ -870,7 +870,7 @@ async function main() {
 
   console.log(
     process.env.DEMO_PASSWORD
-      ? `Seeded ${people.length} people. Their one-time password is in the line above; each person must choose their own on first sign-in.`
+      ? `Seeded ${people.length} people with password "${process.env.DEMO_PASSWORD}"; each person chooses their own on first sign-in.`
       : `Seeded ${people.length} people. Log in with any email above and password "avazone123".`
   );
 }

@@ -2,12 +2,10 @@
 //   1. checks the required environment variables and explains what's missing,
 //   2. creates or updates the tables in your Turso database,
 //   3. loads the demo company the first time (when the database has no users yet).
-//      On a live deployment the demo accounts get a RANDOM one-time password (printed once in this build log,
-//      which only people on your Vercel team can see) instead of the public "avazone123", and everyone must
-//      choose their own password at first sign-in.
+//      Every demo account starts on "avazone123" and must choose its own password at first sign-in.
+// Set RESET_PASSWORDS_TO to put every existing account back on one password (see below).
 // Set SEED_DEMO_DATA=false to start with an empty company instead.
 import { execSync } from "node:child_process";
-import { randomBytes } from "node:crypto";
 import { createClient } from "@libsql/client/web";
 
 try {
@@ -48,18 +46,32 @@ run("npx drizzle-kit push --force");
 const client = createClient({ url, authToken: process.env.DATABASE_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN });
 const { rows } = await client.execute("select count(*) as n from users");
 const people = Number(rows[0].n);
+
+// One-time password reset: set RESET_PASSWORDS_TO (e.g. avazone123) in Vercel → Settings → Environment
+// Variables (Production) and deploy. Everyone can then sign in with it and is asked to choose their own
+// password straight away. DELETE the variable afterwards, or every deploy resets everyone again.
+const resetTo = process.env.RESET_PASSWORDS_TO;
+if (resetTo && people > 0) {
+  const { default: bcrypt } = await import("bcryptjs");
+  const hash = await bcrypt.hash(resetTo, 10);
+  const r = await client.execute({
+    sql: "update users set password_hash = ?, must_change_password = 1, session_version = session_version + 1",
+    args: [hash],
+  });
+  // Clear any "too many tries" pauses so nobody is locked out after the reset.
+  await client.execute("delete from security_events where kind in ('login_failed', 'login_locked', 'login_blocked')");
+  console.log(`→ RESET_PASSWORDS_TO is set: every password (${r.rowsAffected} people) is now "${resetTo}".`);
+  console.log("  Each person chooses their own password right after signing in.");
+  console.log("  ⚠ Now DELETE RESET_PASSWORDS_TO in Vercel → Settings → Environment Variables.");
+}
 client.close();
 
 if (people === 0 && process.env.SEED_DEMO_DATA !== "false") {
-  const live = Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production";
-  if (live && !process.env.DEMO_PASSWORD) {
-    process.env.DEMO_PASSWORD = randomBytes(12).toString("base64url");
-    console.log("→ Empty database: loading the demo company.");
-    console.log(`  One-time password for every demo account: ${process.env.DEMO_PASSWORD}`);
-    console.log("  (Shown only here. Each person must choose a new password the first time they sign in.)");
-  } else {
-    console.log("→ Empty database: loading the demo company (password for every demo account: avazone123)…");
-  }
+  // Live site: everyone starts on "avazone123" (or DEMO_PASSWORD if you set one) and must choose their
+  // own password the first time they sign in.
+  process.env.DEMO_PASSWORD ||= "avazone123";
+  console.log(`→ Empty database: loading the demo company. Password for every demo account: ${process.env.DEMO_PASSWORD}`);
+  console.log("  Each person chooses their own password right after signing in.");
   run("npx tsx db/seed.js");
 } else {
   console.log(`→ Database already has ${people} people — leaving the data alone.`);

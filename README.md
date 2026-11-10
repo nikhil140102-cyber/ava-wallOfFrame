@@ -16,7 +16,7 @@ npm run setup      # creates .env.local, the database, and sample company data
 npm run dev        # http://localhost:3000
 ```
 
-Sign in with any demo account. On your own computer the password for all of them is **`avazone123`** (live deployments get a random one-time password instead — see Security).
+Sign in with any demo account. The password for all of them is **`avazone123`** (on a live site each person then chooses their own).
 
 | Account | Role | What to try |
 |---|---|---|
@@ -62,7 +62,7 @@ The build runs `npm run vercel-build`, which does three things:
 
 1. Checks the variables above. If any are missing, the build stops and tells you which ones to add.
 2. Creates or updates the tables in your database.
-3. On the very first deploy only, loads the demo company with a random one-time password shown once in the build log (everyone must choose their own at first sign-in). Later deploys never touch your data.
+3. On the very first deploy only, loads the demo company: every account starts on `avazone123` and each person chooses their own password at first sign-in. Later deploys never touch your data.
 
 **Common problems**
 
@@ -282,7 +282,8 @@ lib/
 
 - `SESSION_SECRET` must be 32+ random characters (`node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`). Changing it signs everyone out.
 - Do **not** set `SHOW_DEMO_ACCOUNTS=true` on a real company's site.
-- On a live deployment the demo accounts get a random one-time password (printed once in the Vercel build log), never `avazone123`. Set `SEED_DEMO_DATA=false` to skip the demo company.
+- On a live deployment the demo accounts start on `avazone123` and each person must choose their own password the first time they sign in. Set `SEED_DEMO_DATA=false` to skip the demo company.
+- **Can't sign in?** Set `RESET_PASSWORDS_TO=avazone123` in Vercel → Settings → Environment Variables (Production) and deploy once: every account goes back to that password (and any sign-in pause is cleared); each person chooses their own right after signing in. Then **delete the variable**, or every deploy resets everyone again.
 
 **What the app does**
 
