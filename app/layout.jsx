@@ -38,6 +38,7 @@ import "./pages.css";
 import "./frame.css";
 import "./scripts.css";
 import "./language.css";
+import "./phone.css";
 import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";

@@ -84,7 +84,7 @@ export function HomeComposer() {
           <span className="secondary">{t("composer.viewOnly")}</span>
         )}
       </div>
-      <div className="row" style={{ marginTop: 12, paddingLeft: 52, gap: 8, flexWrap: "wrap" }}>
+      <div className="row composer-chips" style={{ marginTop: 12, paddingLeft: 52, gap: 8, flexWrap: "wrap" }}>
         {can("recognition.give") && (
           <button className="chip" onClick={() => openRecognize()}>
             <Icon name="sparkles" size={15} style={{ color: "var(--accent)" }} /> {t("composer.chip.appreciation")}
@@ -95,7 +95,7 @@ export function HomeComposer() {
             <Icon name="megaphone" size={15} style={{ color: "var(--orange)" }} /> {t("composer.chip.announcement")}
           </button>
         )}
-        <span className="caption" style={{ marginLeft: "auto", alignSelf: "center" }}>
+        <span className="caption composer-shortcut" style={{ marginLeft: "auto", alignSelf: "center" }}>
           {rich(t("composer.shortcut"), {
             keys: (
               <>

@@ -160,3 +160,35 @@
   border-color: var(--accent);
   background: var(--bg-elevated);
 }
+
+/* Phones: the "Appreciation" tag drops under the name line so the headline gets the full width
+   (instead of wrapping one word per line). */
+@media (max-width: 640px) {
+  .head {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "avatar text menu"
+      "avatar tag  tag";
+    column-gap: 12px;
+    row-gap: 6px;
+  }
+  .head > a:first-child {
+    grid-area: avatar;
+  }
+  .headText {
+    grid-area: text;
+  }
+  .head > :global(.tag) {
+    grid-area: tag;
+    justify-self: start;
+  }
+  .menuWrap {
+    grid-area: menu;
+    margin-top: -6px;
+    margin-right: -8px;
+  }
+  .post {
+    padding: 16px 16px 10px;
+  }
+}
