@@ -1,4 +1,8 @@
 {
+  "ann.label": "Announcements",
+  "ann.pause": "Pause announcements",
+  "ann.play": "Play announcements",
+  "ann.manage": "Manage announcements",
   "badges.title": "Badges",
   "badges.subtitle_one": "You've earned {earned} of {count}. Badges add points and show on your profile.",
   "badges.subtitle_other": "You've earned {earned} of {count}. Badges add points and show on your profile.",
@@ -317,6 +321,7 @@
   "nav.points": "{points} pts",
   "nav.pointsToNext": "{points} points to {level}",
   "nav.accessDenied": "You don't have access to that page.",
+  "nav.adminAnnouncements": "Announcements",
   "notifications.title": "Notifications",
   "notifications.unreadCount_one": "{n} unread",
   "notifications.unreadCount_other": "{n} unread",

@@ -651,5 +651,10 @@
   "settings.devices.title": "আন ক'ৰবাত ছাইন ইন কৰি আছে নেকি?",
   "settings.devices.hint": "আন সকলো ফোন আৰু কম্পিউটাৰৰ পৰা ছাইন আউট কৰক — শ্বেয়াৰ কৰা ডিভাইচ ব্যৱহাৰ কৰাৰ পিছত উপযোগী।",
   "settings.devices.button": "আন ডিভাইচৰ পৰা ছাইন আউট কৰক",
-  "settings.devices.done": "আপোনাৰ আন সকলো ডিভাইচৰ পৰা ছাইন আউট কৰা হ'ল।"
+  "settings.devices.done": "আপোনাৰ আন সকলো ডিভাইচৰ পৰা ছাইন আউট কৰা হ'ল।",
+  "ann.label": "ঘোষণাসমূহ",
+  "ann.pause": "ঘোষণা ৰখাওক",
+  "ann.play": "ঘোষণা চলাওক",
+  "ann.manage": "ঘোষণা পৰিচালনা",
+  "nav.adminAnnouncements": "ঘোষণাসমূহ"
 }

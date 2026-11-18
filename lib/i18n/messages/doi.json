@@ -651,5 +651,10 @@
   "settings.devices.title": "कुतै होर साइन इन ओ?",
   "settings.devices.hint": "बाकी सारे फोन ते कंप्यूटरें शा साइन आउट करो — कुसै सांझे डिवाइस गी बरतने परैंत कम्म औंदा ऐ।",
   "settings.devices.button": "दूए डिवाइसें शा साइन आउट करो",
-  "settings.devices.done": "तुंदे सारे दूए डिवाइसें शा साइन आउट करी दित्ता गेआ।"
+  "settings.devices.done": "तुंदे सारे दूए डिवाइसें शा साइन आउट करी दित्ता गेआ।",
+  "ann.label": "घोशणां",
+  "ann.pause": "घोशणां रोको",
+  "ann.play": "घोशणां चलाओ",
+  "ann.manage": "घोशणां सांभो",
+  "nav.adminAnnouncements": "घोशणां"
 }

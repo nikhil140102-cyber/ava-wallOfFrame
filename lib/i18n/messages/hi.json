@@ -651,5 +651,10 @@
   "settings.devices.title": "कहीं और साइन इन है?",
   "settings.devices.hint": "बाकी सभी फ़ोन और कंप्यूटर से साइन आउट करें — किसी साझा डिवाइस का इस्तेमाल करने के बाद काम आता है।",
   "settings.devices.button": "दूसरे डिवाइस से साइन आउट करें",
-  "settings.devices.done": "आपके सभी दूसरे डिवाइस से साइन आउट कर दिया गया।"
+  "settings.devices.done": "आपके सभी दूसरे डिवाइस से साइन आउट कर दिया गया।",
+  "ann.label": "घोषणाएँ",
+  "ann.pause": "घोषणाएँ रोकें",
+  "ann.play": "घोषणाएँ चलाएँ",
+  "ann.manage": "घोषणाएँ प्रबंधित करें",
+  "nav.adminAnnouncements": "घोषणाएँ"
 }

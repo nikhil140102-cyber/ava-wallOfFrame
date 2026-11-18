@@ -229,6 +229,65 @@ export async function postAnnouncement(body, imageIds = []) {
   }
 }
 
+// ---------------------------------------------------------------- Announcement bar (HR / admins only)
+
+const announcementSchema = z.object({
+  text: z.string().trim().min(3, "Write the announcement first.").max(200, "Keep it under 200 characters — it scrolls past quickly."),
+  tone: z.enum(["info", "celebrate", "urgent"]).default("info"),
+  // "YYYY-MM-DD" (shown until the end of that day, India time) or empty for "until I end it".
+  endsOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid end date.")
+    .optional()
+    .or(z.literal("")),
+});
+
+export async function saveAnnouncement(input) {
+  try {
+    const actor = await assertPermission("feed.announce");
+    const d = announcementSchema.parse(input);
+    let endsAt = null;
+    if (d.endsOn) {
+      endsAt = new Date(`${d.endsOn}T23:59:59+05:30`);
+      if (endsAt.getTime() <= Date.now()) throw new Error("The end date is already past.");
+    }
+    await db.insert(s.announcements).values({ text: d.text, tone: d.tone, endsAt, createdBy: actor.id });
+    await audit(actor.id, "Posted to the announcement bar", d.text.slice(0, 80));
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function endAnnouncement(id) {
+  try {
+    const actor = await assertPermission("feed.announce");
+    const row = await db.select().from(s.announcements).where(eq(s.announcements.id, String(id))).get();
+    if (!row) throw new Error("That announcement no longer exists.");
+    await db.update(s.announcements).set({ active: false }).where(eq(s.announcements.id, row.id));
+    await audit(actor.id, "Took down an announcement", row.text.slice(0, 80));
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteAnnouncement(id) {
+  try {
+    const actor = await assertPermission("feed.announce");
+    const row = await db.select().from(s.announcements).where(eq(s.announcements.id, String(id))).get();
+    if (!row) throw new Error("That announcement no longer exists.");
+    await db.delete(s.announcements).where(eq(s.announcements.id, row.id));
+    await audit(actor.id, "Deleted an announcement", row.text.slice(0, 80));
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function toggleReaction(postId) {
   try {
     const user = await assertPermission("feed.comment");

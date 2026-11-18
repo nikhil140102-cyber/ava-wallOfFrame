@@ -324,3 +324,15 @@ export const memories = sqliteTable(
   },
   (t) => [index("memories_user_idx").on(t.userId)]
 );
+
+/** The scrolling announcement bar at the top of the app. Only people with "feed.announce" can add to it. */
+export const announcements = sqliteTable("announcements", {
+  id: id(),
+  text: text("text").notNull(),
+  tone: text("tone", { enum: ["info", "celebrate", "urgent"] }).notNull().default("info"),
+  /** Hidden automatically after this moment (null = until someone ends it). */
+  endsAt: integer("ends_at", { mode: "timestamp_ms" }),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdBy: text("created_by").references(() => users.id),
+  createdAt: createdAt(),
+});

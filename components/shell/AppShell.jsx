@@ -10,6 +10,7 @@ import { TabBar } from "./TabBar";
 import { ShortcutsSheet } from "./ShortcutsSheet";
 import { Icon } from "../Icon";
 import { ThemeToggle } from "../ThemeToggle";
+import { AnnouncementBar } from "./AnnouncementBar";
 import { useI18n } from "@/components/I18nProvider";
 
 function UrlSignals() {
@@ -50,6 +51,7 @@ function Frame({ children }) {
             </button>
           </span>
         </header>
+        <AnnouncementBar />
         {children}
       </div>
       <TabBar onMore={() => setOpen(true)} />

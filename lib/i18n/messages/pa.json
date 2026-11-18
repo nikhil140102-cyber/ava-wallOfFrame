@@ -651,5 +651,10 @@
   "settings.devices.title": "ਕਿਤੇ ਹੋਰ ਸਾਈਨ ਇਨ ਹੋ?",
   "settings.devices.hint": "ਬਾਕੀ ਸਾਰੇ ਫ਼ੋਨਾਂ ਅਤੇ ਕੰਪਿਊਟਰਾਂ ਤੋਂ ਸਾਈਨ ਆਊਟ ਕਰੋ — ਸਾਂਝਾ ਡਿਵਾਈਸ ਵਰਤਣ ਤੋਂ ਬਾਅਦ ਕੰਮ ਆਉਂਦਾ ਹੈ।",
   "settings.devices.button": "ਹੋਰ ਡਿਵਾਈਸਾਂ ਤੋਂ ਸਾਈਨ ਆਊਟ ਕਰੋ",
-  "settings.devices.done": "ਤੁਹਾਡੇ ਬਾਕੀ ਸਾਰੇ ਡਿਵਾਈਸਾਂ ਤੋਂ ਸਾਈਨ ਆਊਟ ਕਰ ਦਿੱਤਾ ਗਿਆ।"
+  "settings.devices.done": "ਤੁਹਾਡੇ ਬਾਕੀ ਸਾਰੇ ਡਿਵਾਈਸਾਂ ਤੋਂ ਸਾਈਨ ਆਊਟ ਕਰ ਦਿੱਤਾ ਗਿਆ।",
+  "ann.label": "ਐਲਾਨ",
+  "ann.pause": "ਐਲਾਨ ਰੋਕੋ",
+  "ann.play": "ਐਲਾਨ ਚਲਾਓ",
+  "ann.manage": "ਐਲਾਨ ਪ੍ਰਬੰਧਿਤ ਕਰੋ",
+  "nav.adminAnnouncements": "ਐਲਾਨ"
 }

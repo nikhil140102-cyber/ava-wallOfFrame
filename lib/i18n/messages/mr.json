@@ -651,5 +651,10 @@
   "settings.devices.title": "दुसरीकडे साइन इन आहात?",
   "settings.devices.hint": "इतर सर्व फोन आणि कॉम्प्युटरवरून साइन आउट करा — शेअर केलेले डिव्हाइस वापरल्यानंतर उपयोगी.",
   "settings.devices.button": "इतर डिव्हाइसवरून साइन आउट करा",
-  "settings.devices.done": "तुमच्या इतर सर्व डिव्हाइसवरून साइन आउट केले."
+  "settings.devices.done": "तुमच्या इतर सर्व डिव्हाइसवरून साइन आउट केले.",
+  "ann.label": "घोषणा",
+  "ann.pause": "घोषणा थांबवा",
+  "ann.play": "घोषणा सुरू करा",
+  "ann.manage": "घोषणा व्यवस्थापित करा",
+  "nav.adminAnnouncements": "घोषणा"
 }

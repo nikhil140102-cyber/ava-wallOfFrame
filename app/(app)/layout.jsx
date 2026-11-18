@@ -1,7 +1,16 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 import { requireUser } from "@/lib/auth";
-import { getGivenThisMonth, getLevels, getPeopleLite, getPoints, getSettings, getUnreadCount, levelFor } from "@/lib/queries";
+import {
+  getActiveAnnouncements,
+  getGivenThisMonth,
+  getLevels,
+  getPeopleLite,
+  getPoints,
+  getSettings,
+  getUnreadCount,
+  levelFor,
+} from "@/lib/queries";
 import { AppShell } from "@/components/shell/AppShell";
 import { runDailyAutoPoints } from "@/lib/autopoints";
 import { sendMemoryReminders } from "@/lib/memories";
@@ -14,7 +23,7 @@ export default async function AppLayout({ children }) {
   await runDailyAutoPoints();
   // “On this day” memory reminders (once a day for everyone).
   await sendMemoryReminders();
-  const [settings, levels, points, used, unread, people, values, badges] = await Promise.all([
+  const [settings, levels, points, used, unread, people, values, badges, announcements] = await Promise.all([
     getSettings(),
     getLevels(),
     getPoints([user.id]),
@@ -30,6 +39,7 @@ export default async function AppLayout({ children }) {
       .from(s.badges)
       .where(eq(s.badges.active, true))
       .orderBy(s.badges.category, s.badges.name),
+    getActiveAnnouncements(),
   ]);
   const pts = points.get(user.id);
   const lvl = levelFor(pts.lifetime, levels);
@@ -85,6 +95,7 @@ export default async function AppLayout({ children }) {
     people,
     values,
     badges,
+    announcements,
   };
 
   return <AppShell data={data}>{children}</AppShell>;

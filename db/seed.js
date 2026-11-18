@@ -23,6 +23,7 @@ const uid = () => crypto.randomUUID();
 async function main() {
   // Clear in dependency order so the seed can be re-run.
   for (const t of [
+    s.announcements,
     s.securityEvents,
     s.memories,
     s.auditLogs,
@@ -859,6 +860,23 @@ async function main() {
     note: "Welcome bonus",
     createdAt: ago(20),
   });
+  // Announcement bar demo (posted by HR and the Super Admin).
+  await db.insert(s.announcements).values([
+    {
+      text: "Town hall this Friday at 4 PM in the main hall — bring your questions for leadership",
+      tone: "info",
+      endsAt: new Date(Date.now() + 5 * DAY),
+      createdBy: u["priya"],
+      createdAt: ago(0, 3),
+    },
+    {
+      text: "Welcome Arjun Rao to the DevOps team! Say hi on the Wall",
+      tone: "celebrate",
+      endsAt: new Date(Date.now() + 3 * DAY),
+      createdBy: u["nikhil"],
+      createdAt: ago(0, 6),
+    },
+  ]);
   await db.insert(s.auditLogs).values([
     { actorId: u["nikhil"], action: "Created role", target: "Team Lead", createdAt: ago(40) },
     { actorId: u["priya"], action: "Created badge", target: "Client Champion", createdAt: ago(38) },

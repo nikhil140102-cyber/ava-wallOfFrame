@@ -44,6 +44,7 @@ export function Sidebar({ open, onClose }) {
     { href: "/admin/badges", label: t("nav.adminBadges"), icon: "award", perm: "badges.manage" },
     { href: "/admin/rewards", label: t("nav.adminRewards"), icon: "gift", perm: "rewards.manage", count: data.pendingRedemptions },
     { href: "/admin/moderation", label: t("nav.adminModeration"), icon: "flag", perm: "moderation.manage", count: data.openReports },
+    { href: "/admin/announcements", label: t("nav.adminAnnouncements"), icon: "megaphone", perm: "feed.announce" },
     { href: "/admin/points", label: t("nav.adminPoints"), icon: "sparkles", perm: "points.manage" },
     { href: "/admin/settings", label: t("nav.adminSettings"), icon: "building", perm: "settings.manage" },
     { href: "/admin/audit", label: t("nav.adminAudit"), icon: "list", perm: "audit.view" },

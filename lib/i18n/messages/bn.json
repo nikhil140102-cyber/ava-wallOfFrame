@@ -651,5 +651,10 @@
   "settings.devices.title": "অন্য কোথাও সাইন ইন করা আছে?",
   "settings.devices.hint": "অন্য সব ফোন ও কম্পিউটার থেকে সাইন আউট করুন — শেয়ার করা ডিভাইস ব্যবহারের পরে কাজে আসে।",
   "settings.devices.button": "অন্য ডিভাইস থেকে সাইন আউট",
-  "settings.devices.done": "আপনার অন্য সব ডিভাইস থেকে সাইন আউট করা হয়েছে।"
+  "settings.devices.done": "আপনার অন্য সব ডিভাইস থেকে সাইন আউট করা হয়েছে।",
+  "ann.label": "ঘোষণা",
+  "ann.pause": "ঘোষণা থামান",
+  "ann.play": "ঘোষণা চালু করুন",
+  "ann.manage": "ঘোষণা পরিচালনা",
+  "nav.adminAnnouncements": "ঘোষণা"
 }

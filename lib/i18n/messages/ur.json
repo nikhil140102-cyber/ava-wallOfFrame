@@ -651,5 +651,10 @@
   "settings.devices.title": "کہیں اور سائن اِن ہیں؟",
   "settings.devices.hint": "باقی تمام فونز اور کمپیوٹرز سے سائن آؤٹ کریں — کسی مشترکہ ڈیوائس کے استعمال کے بعد مفید۔",
   "settings.devices.button": "دوسری ڈیوائسز سے سائن آؤٹ کریں",
-  "settings.devices.done": "آپ کی تمام دوسری ڈیوائسز سے سائن آؤٹ کر دیا گیا۔"
+  "settings.devices.done": "آپ کی تمام دوسری ڈیوائسز سے سائن آؤٹ کر دیا گیا۔",
+  "ann.label": "اعلانات",
+  "ann.pause": "اعلانات روکیں",
+  "ann.play": "اعلانات چلائیں",
+  "ann.manage": "اعلانات کا انتظام",
+  "nav.adminAnnouncements": "اعلانات"
 }
