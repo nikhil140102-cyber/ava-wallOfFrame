@@ -656,5 +656,8 @@
   "ann.pause": "ঘোষণা থামান",
   "ann.play": "ঘোষণা চালু করুন",
   "ann.manage": "ঘোষণা পরিচালনা",
-  "nav.adminAnnouncements": "ঘোষণা"
+  "nav.adminAnnouncements": "ঘোষণা",
+  "home.badges.title": "আপনার ব্যাজ",
+  "home.badges.earned": "{total}টির মধ্যে {earned}টি ব্যাজ অর্জিত",
+  "home.badges.none": "এখনও কোনো ব্যাজ নেই — প্রথম ব্যাজ কীভাবে অর্জন করবেন দেখুন"
 }

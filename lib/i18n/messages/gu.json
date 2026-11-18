@@ -656,5 +656,8 @@
   "ann.pause": "જાહેરાતો થોભાવો",
   "ann.play": "જાહેરાતો ચલાવો",
   "ann.manage": "જાહેરાતો મેનેજ કરો",
-  "nav.adminAnnouncements": "જાહેરાતો"
+  "nav.adminAnnouncements": "જાહેરાતો",
+  "home.badges.title": "તમારા બેજ",
+  "home.badges.earned": "{total} માંથી {earned} બેજ મેળવ્યા",
+  "home.badges.none": "હજુ કોઈ બેજ નથી — તમારો પહેલો બેજ કેવી રીતે મેળવવો તે જુઓ"
 }

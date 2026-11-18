@@ -656,5 +656,8 @@
   "ann.pause": "घोशणां रोको",
   "ann.play": "घोशणां चलाओ",
   "ann.manage": "घोशणां सांभो",
-  "nav.adminAnnouncements": "घोशणां"
+  "nav.adminAnnouncements": "घोशणां",
+  "home.badges.title": "तुंदे बैज",
+  "home.badges.earned": "{total} चों {earned} बैज हासल",
+  "home.badges.none": "अजें कोई बैज नेईं — दिक्खो पैह्ला बैज कि'यां हासल करना ऐ"
 }

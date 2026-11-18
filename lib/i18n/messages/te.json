@@ -656,5 +656,8 @@
   "ann.pause": "ప్రకటనలను పాజ్ చేయండి",
   "ann.play": "ప్రకటనలను ప్లే చేయండి",
   "ann.manage": "ప్రకటనలను నిర్వహించండి",
-  "nav.adminAnnouncements": "ప్రకటనలు"
+  "nav.adminAnnouncements": "ప్రకటనలు",
+  "home.badges.title": "మీ బ్యాడ్జ్‌లు",
+  "home.badges.earned": "{total}లో {earned} బ్యాడ్జ్‌లు సంపాదించారు",
+  "home.badges.none": "ఇంకా బ్యాడ్జ్‌లు లేవు — మీ మొదటి బ్యాడ్జ్‌ను ఎలా సంపాదించాలో చూడండి"
 }

@@ -656,5 +656,8 @@
   "ann.pause": "घोशणा थांबयात",
   "ann.play": "घोशणा चालू करात",
   "ann.manage": "घोशणा सांबाळात",
-  "nav.adminAnnouncements": "घोशणा"
+  "nav.adminAnnouncements": "घोशणा",
+  "home.badges.title": "तुमचे बॅज",
+  "home.badges.earned": "{total} पयकीं {earned} बॅज जोडल्यात",
+  "home.badges.none": "अजून एकूय बॅज ना — तुमचो पयलो बॅज कसो जोडचो तें पळयात"
 }

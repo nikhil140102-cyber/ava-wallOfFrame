@@ -656,5 +656,8 @@
   "ann.pause": "घोषणाहरू रोक्नुहोस्",
   "ann.play": "घोषणाहरू चलाउनुहोस्",
   "ann.manage": "घोषणाहरू व्यवस्थापन गर्नुहोस्",
-  "nav.adminAnnouncements": "घोषणाहरू"
+  "nav.adminAnnouncements": "घोषणाहरू",
+  "home.badges.title": "तपाईंका ब्याजहरू",
+  "home.badges.earned": "{total} मध्ये {earned} ब्याज प्राप्त",
+  "home.badges.none": "अहिलेसम्म कुनै ब्याज छैन — पहिलो ब्याज कसरी पाउने हेर्नुहोस्"
 }

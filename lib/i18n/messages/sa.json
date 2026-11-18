@@ -656,5 +656,8 @@
   "ann.pause": "उद्घोषणाः विरमयतु",
   "ann.play": "उद्घोषणाः चालयतु",
   "ann.manage": "उद्घोषणाप्रबन्धनम्",
-  "nav.adminAnnouncements": "उद्घोषणाः"
+  "nav.adminAnnouncements": "उद्घोषणाः",
+  "home.badges.title": "भवतः पदकानि",
+  "home.badges.earned": "{total} मध्ये {earned} पदकानि अर्जितानि",
+  "home.badges.none": "अद्यापि किमपि पदकं नास्ति — प्रथमं पदकं कथम् अर्जनीयम् इति पश्यतु"
 }

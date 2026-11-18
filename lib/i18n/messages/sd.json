@@ -656,5 +656,8 @@
   "ann.pause": "एलान रोकियो",
   "ann.play": "एलान हलायो",
   "ann.manage": "एलान संभालियो",
-  "nav.adminAnnouncements": "एलान"
+  "nav.adminAnnouncements": "एलान",
+  "home.badges.title": "तव्हांजा बैज",
+  "home.badges.earned": "{total} मां {earned} बैज हासिल कया",
+  "home.badges.none": "अञा को बि बैज कोन्हे — ॾिसो त पहिरियों बैज कीअं हासिल कजे"
 }

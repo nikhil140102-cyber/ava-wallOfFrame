@@ -656,5 +656,8 @@
   "ann.pause": "ঘোষণা ৰখাওক",
   "ann.play": "ঘোষণা চলাওক",
   "ann.manage": "ঘোষণা পৰিচালনা",
-  "nav.adminAnnouncements": "ঘোষণাসমূহ"
+  "nav.adminAnnouncements": "ঘোষণাসমূহ",
+  "home.badges.title": "আপোনাৰ বেজ",
+  "home.badges.earned": "{total}টাৰ ভিতৰত {earned}টা বেজ লাভ কৰা হৈছে",
+  "home.badges.none": "এতিয়াও কোনো বেজ নাই — আপোনাৰ প্ৰথম বেজ কেনেকৈ লাভ কৰিব চাওক"
 }

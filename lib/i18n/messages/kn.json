@@ -656,5 +656,8 @@
   "ann.pause": "ಪ್ರಕಟಣೆಗಳನ್ನು ವಿರಾಮಗೊಳಿಸಿ",
   "ann.play": "ಪ್ರಕಟಣೆಗಳನ್ನು ಪ್ಲೇ ಮಾಡಿ",
   "ann.manage": "ಪ್ರಕಟಣೆಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
-  "nav.adminAnnouncements": "ಪ್ರಕಟಣೆಗಳು"
+  "nav.adminAnnouncements": "ಪ್ರಕಟಣೆಗಳು",
+  "home.badges.title": "ನಿಮ್ಮ ಬ್ಯಾಡ್ಜ್‌ಗಳು",
+  "home.badges.earned": "{total} ರಲ್ಲಿ {earned} ಬ್ಯಾಡ್ಜ್‌ಗಳನ್ನು ಗಳಿಸಲಾಗಿದೆ",
+  "home.badges.none": "ಇನ್ನೂ ಯಾವುದೇ ಬ್ಯಾಡ್ಜ್‌ಗಳಿಲ್ಲ — ನಿಮ್ಮ ಮೊದಲ ಬ್ಯಾಡ್ಜ್ ಹೇಗೆ ಗಳಿಸುವುದು ಎಂದು ನೋಡಿ"
 }

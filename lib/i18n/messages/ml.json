@@ -656,5 +656,8 @@
   "ann.pause": "അറിയിപ്പുകൾ താൽക്കാലികമായി നിർത്തുക",
   "ann.play": "അറിയിപ്പുകൾ പ്ലേ ചെയ്യുക",
   "ann.manage": "അറിയിപ്പുകൾ മാനേജ് ചെയ്യുക",
-  "nav.adminAnnouncements": "അറിയിപ്പുകൾ"
+  "nav.adminAnnouncements": "അറിയിപ്പുകൾ",
+  "home.badges.title": "നിങ്ങളുടെ ബാഡ്ജുകൾ",
+  "home.badges.earned": "{total} എണ്ണത്തിൽ {earned} ബാഡ്ജുകൾ നേടി",
+  "home.badges.none": "ഇതുവരെ ബാഡ്ജുകളൊന്നുമില്ല — ആദ്യ ബാഡ്ജ് എങ്ങനെ നേടാമെന്ന് കാണുക"
 }

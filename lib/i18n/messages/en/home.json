@@ -40,5 +40,8 @@
   "tasks.team.title_other": "{count} of {total} teammates are quiet",
   "tasks.team.detail": "They haven't thanked anyone this month",
   "tasks.review": "Review",
-  "tasks.seeTeam": "See team"
+  "tasks.seeTeam": "See team",
+  "badges.title": "Your badges",
+  "badges.earned": "{earned} of {total} badges earned",
+  "badges.none": "No badges yet — see how to earn your first one"
 }

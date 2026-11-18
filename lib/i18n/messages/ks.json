@@ -656,5 +656,8 @@
   "ann.pause": "اعلانات روکِو",
   "ann.play": "اعلانات چلٲوِو",
   "ann.manage": "اعلانن ہُند اِنتِظام",
-  "nav.adminAnnouncements": "اعلانات"
+  "nav.adminAnnouncements": "اعلانات",
+  "home.badges.title": "تُہٕنٛدۍ بیجز",
+  "home.badges.earned": "{total} منٛزٕ {earned} بیجز حٲصِل",
+  "home.badges.none": "وُنہِ چھُ نہٕ کانٛہہ بیج — وُچھِو گۄڈنیُک بیج کِتھہٕ پٲٹھۍ حٲصِل کرو"
 }

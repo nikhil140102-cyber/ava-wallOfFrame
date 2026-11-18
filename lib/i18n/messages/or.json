@@ -656,5 +656,8 @@
   "ann.pause": "ଘୋଷଣା ବିରତ କରନ୍ତୁ",
   "ann.play": "ଘୋଷଣା ଚଲାନ୍ତୁ",
   "ann.manage": "ଘୋଷଣା ପରିଚାଳନା",
-  "nav.adminAnnouncements": "ଘୋଷଣା"
+  "nav.adminAnnouncements": "ଘୋଷଣା",
+  "home.badges.title": "ଆପଣଙ୍କ ବ୍ୟାଜ୍",
+  "home.badges.earned": "{total}ଟି ମଧ୍ୟରୁ {earned}ଟି ବ୍ୟାଜ୍ ଅର୍ଜିତ",
+  "home.badges.none": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ବ୍ୟାଜ୍ ନାହିଁ — ପ୍ରଥମ ବ୍ୟାଜ୍ କିପରି ଅର୍ଜନ କରିବେ ଦେଖନ୍ତୁ"
 }

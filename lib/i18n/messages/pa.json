@@ -656,5 +656,8 @@
   "ann.pause": "ਐਲਾਨ ਰੋਕੋ",
   "ann.play": "ਐਲਾਨ ਚਲਾਓ",
   "ann.manage": "ਐਲਾਨ ਪ੍ਰਬੰਧਿਤ ਕਰੋ",
-  "nav.adminAnnouncements": "ਐਲਾਨ"
+  "nav.adminAnnouncements": "ਐਲਾਨ",
+  "home.badges.title": "ਤੁਹਾਡੇ ਬੈਜ",
+  "home.badges.earned": "{total} ਵਿੱਚੋਂ {earned} ਬੈਜ ਹਾਸਲ ਕੀਤੇ",
+  "home.badges.none": "ਹਾਲੇ ਕੋਈ ਬੈਜ ਨਹੀਂ — ਦੇਖੋ ਕਿ ਆਪਣਾ ਪਹਿਲਾ ਬੈਜ ਕਿਵੇਂ ਹਾਸਲ ਕਰਨਾ ਹੈ"
 }

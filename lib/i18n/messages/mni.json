@@ -656,5 +656,8 @@
   "ann.pause": "ꯂꯥꯎꯊꯣꯛꯄꯁꯤꯡ ꯂꯦꯞꯍꯟꯕ",
   "ann.play": "ꯂꯥꯎꯊꯣꯛꯄꯁꯤꯡ ꯍꯧꯗꯣꯛꯄ",
   "ann.manage": "ꯂꯥꯎꯊꯣꯛꯄꯁꯤꯡ ꯌꯦꯡꯁꯤꯟꯕ",
-  "nav.adminAnnouncements": "ꯂꯥꯎꯊꯣꯛꯄꯁꯤꯡ"
+  "nav.adminAnnouncements": "ꯂꯥꯎꯊꯣꯛꯄꯁꯤꯡ",
+  "home.badges.title": "ꯅꯍꯥꯛꯀꯤ ꯕꯦꯖ꯭ꯁꯤꯡ",
+  "home.badges.earned": "{total} ꯒꯤ ꯃꯅꯨꯡꯗꯒꯤ ꯕꯦꯖ {earned} ꯐꯡꯂꯦ",
+  "home.badges.none": "ꯍꯧꯖꯤꯛ ꯐꯥꯎꯕ ꯕꯦꯖ ꯑꯃꯠꯇ ꯂꯩꯇꯦ — ꯑꯍꯥꯅꯕ ꯕꯦꯖ ꯀꯔꯝꯅ ꯐꯡꯒꯅꯤ ꯌꯦꯡꯕꯤꯌꯨ"
 }

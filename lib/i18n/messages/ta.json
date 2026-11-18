@@ -656,5 +656,8 @@
   "ann.pause": "அறிவிப்புகளை இடைநிறுத்து",
   "ann.play": "அறிவிப்புகளை இயக்கு",
   "ann.manage": "அறிவிப்புகளை நிர்வகி",
-  "nav.adminAnnouncements": "அறிவிப்புகள்"
+  "nav.adminAnnouncements": "அறிவிப்புகள்",
+  "home.badges.title": "உங்கள் பேட்ஜ்கள்",
+  "home.badges.earned": "{total} இல் {earned} பேட்ஜ்கள் பெறப்பட்டன",
+  "home.badges.none": "இன்னும் பேட்ஜ்கள் இல்லை — உங்கள் முதல் பேட்ஜை எப்படிப் பெறுவது எனப் பாருங்கள்"
 }

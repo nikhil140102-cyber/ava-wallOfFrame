@@ -656,5 +656,8 @@
   "ann.pause": "घोषणाएँ रोकें",
   "ann.play": "घोषणाएँ चलाएँ",
   "ann.manage": "घोषणाएँ प्रबंधित करें",
-  "nav.adminAnnouncements": "घोषणाएँ"
+  "nav.adminAnnouncements": "घोषणाएँ",
+  "home.badges.title": "आपके बैज",
+  "home.badges.earned": "{total} में से {earned} बैज मिले",
+  "home.badges.none": "अभी कोई बैज नहीं — देखें कि अपना पहला बैज कैसे पाएँ"
 }

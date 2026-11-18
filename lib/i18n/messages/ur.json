@@ -656,5 +656,8 @@
   "ann.pause": "اعلانات روکیں",
   "ann.play": "اعلانات چلائیں",
   "ann.manage": "اعلانات کا انتظام",
-  "nav.adminAnnouncements": "اعلانات"
+  "nav.adminAnnouncements": "اعلانات",
+  "home.badges.title": "آپ کے بیجز",
+  "home.badges.earned": "{total} میں سے {earned} بیجز حاصل کیے",
+  "home.badges.none": "ابھی کوئی بیج نہیں — دیکھیں کہ اپنا پہلا بیج کیسے حاصل کریں"
 }

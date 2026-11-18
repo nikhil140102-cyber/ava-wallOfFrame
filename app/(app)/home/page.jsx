@@ -9,6 +9,7 @@ import { Icon } from "@/components/Icon";
 import { RecognizeButton } from "@/components/RecognizeButton";
 import { GettingStarted } from "@/components/GettingStarted";
 import { NeedsYou } from "@/components/NeedsYou";
+import { MyBadgesCard } from "@/components/MyBadgesCard";
 import { PageHelp } from "@/components/PageHelp";
 import { and, eq, sql } from "drizzle-orm";
 import { db, schema as s } from "@/db";
@@ -161,7 +162,6 @@ export default async function HomePage({ searchParams }) {
 
       <div className="grid-2">
         <div className="stack">
-          <GettingStarted steps={steps} />
           <OnThisDay groups={onThisDay} />
           <HomeComposer />
           {feed.length === 0 ? (
@@ -177,9 +177,13 @@ export default async function HomePage({ searchParams }) {
           )}
         </div>
 
-        <aside className="stack sticky-rail">
+        {/* The right column scrolls with the page: it is taller than most screens, and a sticky column
+            would hide its lower cards until the end of the feed. */}
+        <aside className="stack">
           <NeedsYou tasks={tasks} />
+          <GettingStarted steps={steps} />
           <LevelCard />
+          <MyBadgesCard userId={user.id} />
 
           <section className="card card-pad">
             <div className="row" style={{ marginBottom: 8 }}>

@@ -656,5 +656,8 @@
   "ann.pause": "घोसनाफोर पज खालाम",
   "ann.play": "घोसनाफोर प्ले खालाम",
   "ann.manage": "घोसनाफोर मेनेज खालाम",
-  "nav.adminAnnouncements": "घोसनाफोर"
+  "nav.adminAnnouncements": "घोसनाफोर",
+  "home.badges.title": "नोंथाङनि बेज",
+  "home.badges.earned": "{total}नि गेजेरनिफ्राय {earned} बेज मोनबाय",
+  "home.badges.none": "दा सिम बेज गैया — नोंथाङनि गिबि बेज बबेहै मोनथाव नाय"
 }

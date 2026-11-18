@@ -656,5 +656,8 @@
   "ann.pause": "घोषणा थांबवा",
   "ann.play": "घोषणा सुरू करा",
   "ann.manage": "घोषणा व्यवस्थापित करा",
-  "nav.adminAnnouncements": "घोषणा"
+  "nav.adminAnnouncements": "घोषणा",
+  "home.badges.title": "तुमचे बॅज",
+  "home.badges.earned": "{total} पैकी {earned} बॅज मिळवले",
+  "home.badges.none": "अद्याप कोणताही बॅज नाही — तुमचा पहिला बॅज कसा मिळवायचा ते पाहा"
 }

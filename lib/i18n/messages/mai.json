@@ -656,5 +656,8 @@
   "ann.pause": "घोषणा रोकू",
   "ann.play": "घोषणा चलाउ",
   "ann.manage": "घोषणा प्रबंधन",
-  "nav.adminAnnouncements": "घोषणा सभ"
+  "nav.adminAnnouncements": "घोषणा सभ",
+  "home.badges.title": "अहाँक बैज",
+  "home.badges.earned": "{total} मे सँ {earned} टा बैज भेटल",
+  "home.badges.none": "एखन धरि कोनो बैज नहि — देखू जे पहिल बैज कोना पाबी"
 }
