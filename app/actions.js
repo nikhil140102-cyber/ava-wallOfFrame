@@ -59,7 +59,6 @@ async function usersWith(permission) {
   return rows.map((r) => r.id);
 }
 
-
 // ---------------------------------------------------------------- Auth
 
 export async function login(_, form) {
@@ -75,7 +74,10 @@ export async function login(_, form) {
   if (wait) {
     await logSecurity("login_blocked", { email, ip });
     const mins = Math.ceil(wait / 60000);
-    return { ok: false, error: `Too many tries. Please wait ${mins} minute${mins === 1 ? "" : "s"} and try again, or ask HR to reset your password.` };
+    return {
+      ok: false,
+      error: `Too many tries. Please wait ${mins} minute${mins === 1 ? "" : "s"} and try again, or ask HR to reset your password.`,
+    };
   }
 
   const user = email ? await db.select().from(s.users).where(eq(s.users.email, email)).get() : null;
@@ -264,7 +266,11 @@ export async function saveAnnouncement(input) {
 export async function endAnnouncement(id) {
   try {
     const actor = await assertPermission("feed.announce");
-    const row = await db.select().from(s.announcements).where(eq(s.announcements.id, String(id))).get();
+    const row = await db
+      .select()
+      .from(s.announcements)
+      .where(eq(s.announcements.id, String(id)))
+      .get();
     if (!row) throw new Error("That announcement no longer exists.");
     await db.update(s.announcements).set({ active: false }).where(eq(s.announcements.id, row.id));
     await audit(actor.id, "Took down an announcement", row.text.slice(0, 80));
@@ -278,7 +284,11 @@ export async function endAnnouncement(id) {
 export async function deleteAnnouncement(id) {
   try {
     const actor = await assertPermission("feed.announce");
-    const row = await db.select().from(s.announcements).where(eq(s.announcements.id, String(id))).get();
+    const row = await db
+      .select()
+      .from(s.announcements)
+      .where(eq(s.announcements.id, String(id)))
+      .get();
     if (!row) throw new Error("That announcement no longer exists.");
     await db.delete(s.announcements).where(eq(s.announcements.id, row.id));
     await audit(actor.id, "Deleted an announcement", row.text.slice(0, 80));
@@ -324,7 +334,11 @@ export async function postTalk(input) {
 export async function deleteTalk(id) {
   try {
     const user = await me();
-    const msg = await db.select().from(s.talkMessages).where(eq(s.talkMessages.id, String(id))).get();
+    const msg = await db
+      .select()
+      .from(s.talkMessages)
+      .where(eq(s.talkMessages.id, String(id)))
+      .get();
     if (!msg) throw new Error("That message no longer exists.");
     if (msg.authorId !== user.id && !user.can("moderation.manage")) throw new Error("You can only delete your own messages.");
     await db.update(s.talkMessages).set({ replyToId: null }).where(eq(s.talkMessages.replyToId, msg.id));
@@ -341,7 +355,11 @@ export async function deleteTalk(id) {
 export async function reportTalk(id) {
   try {
     await me();
-    const msg = await db.select().from(s.talkMessages).where(eq(s.talkMessages.id, String(id))).get();
+    const msg = await db
+      .select()
+      .from(s.talkMessages)
+      .where(eq(s.talkMessages.id, String(id)))
+      .get();
     if (!msg) throw new Error("That message no longer exists.");
     await db
       .update(s.talkMessages)
@@ -362,6 +380,7 @@ export async function reportTalk(id) {
 
 const questionSchema = z
   .object({
+    id: z.string().max(64).optional(),
     type: z.enum(QUESTION_TYPES),
     prompt: z.string().trim().min(3, "Every question needs some text.").max(200),
     options: z.array(z.string().trim().min(1).max(60)).max(8).default([]),
@@ -387,6 +406,14 @@ const surveySchema = z
   })
   .refine((d) => !d.endsOn || d.endsOn >= d.startsOn, { message: "The end date is before the start date." });
 
+// Choice questions keep their options; stars and 0–10 keep HR's two end labels (low, high).
+const optionsFor = (q) =>
+  ["choice", "multi"].includes(q.type)
+    ? q.options
+    : ["scale", "nps"].includes(q.type) && q.options.length >= 2
+      ? q.options.slice(0, 2)
+      : [];
+
 export async function saveSurvey(input) {
   try {
     const actor = await assertPermission("surveys.manage");
@@ -408,7 +435,7 @@ export async function saveSurvey(input) {
         position: i,
         type: q.type,
         prompt: q.prompt,
-        options: ["choice", "multi"].includes(q.type) ? q.options : [],
+        options: optionsFor(q),
         required: q.required,
       }))
     );
@@ -427,12 +454,85 @@ export async function saveSurvey(input) {
   }
 }
 
+// HR edits a survey. Before anyone answers, everything can change. After people have answered,
+// the wording, dates and labels can still change and new questions can be added, but answered
+// questions keep their type and choices, and "how often" / "anonymous" stay as they were —
+// otherwise old answers would be counted wrongly or lose their anonymity.
+export async function updateSurvey(id, input) {
+  try {
+    const actor = await assertPermission("surveys.manage");
+    const sv = await db
+      .select()
+      .from(s.surveys)
+      .where(eq(s.surveys.id, String(id)))
+      .get();
+    if (!sv) throw new Error("Survey not found.");
+    const d = surveySchema.parse(input);
+    const existing = await db.select().from(s.surveyQuestions).where(eq(s.surveyQuestions.surveyId, sv.id));
+    const answered = await db
+      .select({ id: s.surveyResponses.id })
+      .from(s.surveyResponses)
+      .where(eq(s.surveyResponses.surveyId, sv.id))
+      .limit(1);
+    const locked = answered.length > 0;
+    if (locked) {
+      if (d.frequency !== sv.frequency)
+        throw new Error("People have already answered, so “How often” can't change. Create a new survey instead.");
+      if (d.anonymous !== sv.anonymous)
+        throw new Error("People have already answered, so anonymous can't be switched. Create a new survey instead.");
+      for (const ex of existing) {
+        const q = d.questions.find((x) => x.id === ex.id);
+        if (!q) throw new Error("Questions that already have answers can't be removed.");
+        if (q.type !== ex.type) throw new Error("Questions that already have answers can't change their answer type.");
+        if (["choice", "multi"].includes(ex.type) && (ex.options ?? []).some((o) => !q.options.includes(o)))
+          throw new Error("Answered choices can't be renamed or removed. You can add new ones.");
+      }
+    }
+    const known = new Set(existing.map((q) => q.id));
+    await db
+      .update(s.surveys)
+      .set({
+        title: d.title,
+        intro: d.intro,
+        anonymous: d.anonymous,
+        frequency: d.frequency,
+        startsOn: d.startsOn,
+        endsOn: d.endsOn || null,
+      })
+      .where(eq(s.surveys.id, sv.id));
+    const keep = new Set();
+    for (const [i, q] of d.questions.entries()) {
+      const values = { position: i, type: q.type, prompt: q.prompt, options: optionsFor(q), required: q.required };
+      if (q.id && known.has(q.id)) {
+        keep.add(q.id);
+        await db.update(s.surveyQuestions).set(values).where(eq(s.surveyQuestions.id, q.id));
+      } else {
+        await db.insert(s.surveyQuestions).values({ surveyId: sv.id, ...values });
+      }
+    }
+    const gone = existing.filter((q) => !keep.has(q.id)).map((q) => q.id);
+    if (gone.length) await db.delete(s.surveyQuestions).where(inArray(s.surveyQuestions.id, gone));
+    await audit(actor.id, "Edited pulse survey", d.title);
+    revalidatePath("/", "layout");
+    return { ok: true, id: sv.id };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function setSurveyActive(id, active) {
   try {
     const actor = await assertPermission("surveys.manage");
-    const sv = await db.select().from(s.surveys).where(eq(s.surveys.id, String(id))).get();
+    const sv = await db
+      .select()
+      .from(s.surveys)
+      .where(eq(s.surveys.id, String(id)))
+      .get();
     if (!sv) throw new Error("Survey not found.");
-    await db.update(s.surveys).set({ active: Boolean(active) }).where(eq(s.surveys.id, sv.id));
+    await db
+      .update(s.surveys)
+      .set({ active: Boolean(active) })
+      .where(eq(s.surveys.id, sv.id));
     await audit(actor.id, active ? "Resumed pulse survey" : "Paused pulse survey", sv.title);
     revalidatePath("/", "layout");
     return { ok: true };
@@ -444,7 +544,11 @@ export async function setSurveyActive(id, active) {
 export async function deleteSurvey(id) {
   try {
     const actor = await assertPermission("surveys.manage");
-    const sv = await db.select().from(s.surveys).where(eq(s.surveys.id, String(id))).get();
+    const sv = await db
+      .select()
+      .from(s.surveys)
+      .where(eq(s.surveys.id, String(id)))
+      .get();
     if (!sv) throw new Error("Survey not found.");
     const responses = await db.select({ id: s.surveyResponses.id }).from(s.surveyResponses).where(eq(s.surveyResponses.surveyId, sv.id));
     if (responses.length)
@@ -468,7 +572,11 @@ export async function deleteSurvey(id) {
 export async function submitSurvey(surveyId, answers) {
   try {
     const user = await me();
-    const sv = await db.select().from(s.surveys).where(eq(s.surveys.id, String(surveyId))).get();
+    const sv = await db
+      .select()
+      .from(s.surveys)
+      .where(eq(s.surveys.id, String(surveyId)))
+      .get();
     if (!sv || !isOpen(sv)) throw new Error("This survey is closed.");
     const period = periodFor(sv.frequency);
     const already = await db
@@ -1147,7 +1255,10 @@ const prefsSchema = z
   .object({
     theme: z.enum(["system", "light", "dark"]).optional(),
     emailNotifications: z.boolean().optional(),
-    locale: z.string().refine((v) => isLocale(v), "Unknown language.").optional(),
+    locale: z
+      .string()
+      .refine((v) => isLocale(v), "Unknown language.")
+      .optional(),
   })
   .strict(); // only these fields — never role, points or anything else
 
