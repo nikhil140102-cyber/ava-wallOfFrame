@@ -80,7 +80,7 @@ export default async function PulseResultsPage({ params, searchParams }) {
   const periodSize = new Map(trendPeriods.map((per) => [per, responses.filter((r) => r.period === per).length]));
 
   return (
-    <main className="page page-narrow">
+    <main className="page pulse-wide">
       <Link href="/admin/pulse" className="caption row" style={{ gap: 4, marginBottom: 10, color: "var(--accent)" }}>
         <Icon name="chevronDown" size={14} style={{ transform: "rotate(90deg)" }} /> All surveys
       </Link>
@@ -137,8 +137,8 @@ export default async function PulseResultsPage({ params, searchParams }) {
       </div>
 
       {selected === "all" && smallPeriods.length > 0 && (
-        <p className="caption" style={{ marginBottom: 12 }}>
-          <Icon name="eyeOff" size={12} /> Not included yet, to keep answers anonymous:{" "}
+        <p className="caption pulse-heldback">
+          <Icon name="eyeOff" size={13} /> Not included yet, to keep answers anonymous:{" "}
           {smallPeriods.map((per) => `${periodLabel(sv.frequency, per)} (${periodCount.get(per)} so far)`).join(", ")}. They appear once
           {` ${MIN_ANON}`} people have answered.
         </p>
@@ -164,13 +164,14 @@ export default async function PulseResultsPage({ params, searchParams }) {
           </p>
         </div>
       ) : (
-        <div className="stack">
+        <div className="pulse-results-grid">
           {hasRated && sat.people.total > 0 && (
             <SatisfactionMeter
               {...sat.people}
               unit={selected === "all" && recurring ? "responses" : "people"}
               title={`How happy people are${selected === "all" ? "" : ` · ${periodLabel(sv.frequency, selected)}`}`}
               note={`${SAT_RULE} With several rating questions, a person's answers are averaged.`}
+              className="pulse-span"
             />
           )}
           {questions.map((q, i) => {
@@ -189,7 +190,7 @@ export default async function PulseResultsPage({ params, searchParams }) {
                     .filter((x) => x.v !== null)
                 : [];
             return (
-              <section key={q.id} className="card card-pad">
+              <section key={q.id} className={`card card-pad${q.type === "text" ? " pulse-span" : ""}`}>
                 <div className="row" style={{ gap: 10, alignItems: "flex-start" }}>
                   <span className="pulse-q-num">{i + 1}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>

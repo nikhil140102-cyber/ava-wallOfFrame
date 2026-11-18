@@ -23,7 +23,7 @@ export default async function SatisfactionReportPage({ searchParams }) {
   const { rows, overall, weeks } = await companyReport(range[2]);
 
   return (
-    <main className="page page-narrow">
+    <main className="page pulse-wide">
       <Link href="/admin/pulse" className="caption row" style={{ gap: 4, marginBottom: 10, color: "var(--accent)" }}>
         <Icon name="chevronDown" size={14} style={{ transform: "rotate(90deg)" }} /> Pulse surveys
       </Link>
@@ -56,8 +56,8 @@ export default async function SatisfactionReportPage({ searchParams }) {
           <p>Once people answer surveys with faces, stars or 0–10 questions, the report fills in here.</p>
         </div>
       ) : (
-        <div className="stack">
-          <SatisfactionMeter {...overall} unit="responses" title={`Everyone · ${range[1].toLowerCase()}`} note={SAT_RULE} />
+        <div className="pulse-results-grid">
+          <SatisfactionMeter className={weeks.length > 1 ? "" : "pulse-span"} {...overall} unit="responses" title={`Everyone · ${range[1].toLowerCase()}`} note={SAT_RULE} />
 
           {weeks.length > 1 && (
             <section className="card card-pad">
@@ -79,7 +79,7 @@ export default async function SatisfactionReportPage({ searchParams }) {
             </section>
           )}
 
-          <section className="group-block">
+          <section className="group-block pulse-span">
             <div className="section-label">By survey</div>
             <div className="group">
               {rows.map((row) => (
@@ -101,12 +101,12 @@ export default async function SatisfactionReportPage({ searchParams }) {
                         </span>
                       </>
                     ) : (
-                      <span className="caption" style={{ display: "block" }}>
+                      <span className="caption sat-held">
                         <Icon name="eyeOff" size={12} /> Hidden until 3 people have answered, to keep it anonymous
                       </span>
                     )}
                     {row.total > 0 && row.waiting > 0 && (
-                      <span className="caption" style={{ display: "block" }}>
+                      <span className="caption sat-held">
                         <Icon name="eyeOff" size={12} /> {row.waiting} more {row.waiting === 1 ? "answer is" : "answers are"} held back until enough people answer
                       </span>
                     )}

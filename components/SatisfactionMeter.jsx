@@ -13,14 +13,14 @@ export function SatisfactionBar({ happy, neutral, unhappy, total, thin = false }
   );
 }
 
-export function SatisfactionMeter({ happy, neutral, unhappy, total, unit = "people", title = "Satisfaction", note }) {
+export function SatisfactionMeter({ happy, neutral, unhappy, total, unit = "people", title = "Satisfaction", note, className = "" }) {
   const items = [
     ["happy", "😄", "Happy", happy],
     ["neutral", "😐", "Neutral", neutral],
     ["unhappy", "😞", "Not happy", unhappy],
   ];
   return (
-    <section className="card card-pad sat-card">
+    <section className={`card card-pad sat-card ${className}`}>
       <div className="sat-head">
         <div>
           <span className="caption">{title}</span>
