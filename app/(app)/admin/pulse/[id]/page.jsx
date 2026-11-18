@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { asc, eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 import { requirePermission } from "@/lib/auth";
 import { statusOf } from "@/lib/pulse";
+import { MIN_ANON, RATED, satisfactionOf, surveyData } from "@/lib/pulse-report";
 import { Icon } from "@/components/Icon";
+import { SAT_RULE, SatisfactionBar, SatisfactionMeter } from "@/components/SatisfactionMeter";
 
 export const metadata = { title: "Pulse results" };
 export const dynamic = "force-dynamic";
 
-const MIN_ANON = 3; // anonymous results stay hidden until at least this many people answered
 const MOODS = ["😞", "😕", "😐", "🙂", "😄"];
 const FREQ = { once: "One-time", daily: "Every day", weekly: "Every week" };
 const STATUS_LABEL = { open: "Live", upcoming: "Scheduled", ended: "Ended", paused: "Paused" };
@@ -52,29 +53,10 @@ export default async function PulseResultsPage({ params, searchParams }) {
   await requirePermission("surveys.manage");
   const { id } = await params;
   const { p } = await searchParams;
-  const sv = await db.select().from(s.surveys).where(eq(s.surveys.id, id)).get();
-  if (!sv) notFound();
-
-  const [questions, responses, people] = await Promise.all([
-    db.select().from(s.surveyQuestions).where(eq(s.surveyQuestions.surveyId, sv.id)).orderBy(asc(s.surveyQuestions.position)),
-    db
-      .select({ id: s.surveyResponses.id, period: s.surveyResponses.period, name: s.users.name, at: s.surveyResponses.createdAt })
-      .from(s.surveyResponses)
-      .leftJoin(s.users, eq(s.users.id, s.surveyResponses.userId))
-      .where(eq(s.surveyResponses.surveyId, sv.id)),
-    db.select({ id: s.users.id }).from(s.users).where(eq(s.users.active, true)),
-  ]);
-  const answers = responses.length
-    ? await db
-        .select()
-        .from(s.surveyAnswers)
-        .where(
-          inArray(
-            s.surveyAnswers.responseId,
-            responses.map((r) => r.id)
-          )
-        )
-    : [];
+  const data = await surveyData(id);
+  if (!data) notFound();
+  const { sv, questions, responses, answers } = data;
+  const people = await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.active, true));
 
   const periods = [...new Set(responses.map((r) => r.period))].sort().reverse();
   const recurring = sv.frequency !== "once";
@@ -89,6 +71,8 @@ export default async function PulseResultsPage({ params, searchParams }) {
   const selIds = new Set(inSel.map((r) => r.id));
   const respById = new Map(responses.map((r) => [r.id, r]));
   const hidden = sv.anonymous && inSel.length < MIN_ANON;
+  const sat = satisfactionOf(questions, answers, selIds);
+  const hasRated = questions.some((q) => RATED.includes(q.type));
   const rate = selected === "all" && recurring ? null : Math.round((inSel.length / Math.max(1, people.length)) * 100);
 
   // Trend: average per period for number questions (newest 12 periods, oldest first).
@@ -110,6 +94,11 @@ export default async function PulseResultsPage({ params, searchParams }) {
             {sv.endsOn ? ` → ${sv.endsOn}` : ""} · {STATUS_LABEL[statusOf(sv)]} · {sv.anonymous ? "Anonymous" : "Names visible"}
           </p>
         </div>
+        {inSel.length > 0 && !hidden && (
+          <a href={`/admin/pulse/report/download?survey=${sv.id}&p=${selected}`} className="btn btn-gray" download>
+            <Icon name="inbox" size={16} /> Download report
+          </a>
+        )}
       </header>
 
       {recurring && periods.length > 0 && (
@@ -176,6 +165,14 @@ export default async function PulseResultsPage({ params, searchParams }) {
         </div>
       ) : (
         <div className="stack">
+          {hasRated && sat.people.total > 0 && (
+            <SatisfactionMeter
+              {...sat.people}
+              unit={selected === "all" && recurring ? "responses" : "people"}
+              title={`How happy people are${selected === "all" ? "" : ` · ${periodLabel(sv.frequency, selected)}`}`}
+              note={`${SAT_RULE} With several rating questions, a person's answers are averaged.`}
+            />
+          )}
           {questions.map((q, i) => {
             const qa = answers.filter((a) => a.questionId === q.id && selIds.has(a.responseId));
             const nums = qa.map((a) => Number(a.value)).filter((n) => Number.isFinite(n));
@@ -218,6 +215,15 @@ export default async function PulseResultsPage({ params, searchParams }) {
                   )}
                 </div>
 
+                {sat.byQuestion.get(q.id)?.total > 0 && (
+                  <div className="sat-q">
+                    <SatisfactionBar {...sat.byQuestion.get(q.id)} thin />
+                    <span className="caption">
+                      <b className="sat-t-happy">{sat.byQuestion.get(q.id).happy} happy</b> · {sat.byQuestion.get(q.id).neutral} neutral ·{" "}
+                      <b className="sat-t-unhappy">{sat.byQuestion.get(q.id).unhappy} not happy</b>
+                    </span>
+                  </div>
+                )}
                 {(q.type === "scale" || q.type === "mood") && (
                   <Bars
                     total={nums.length}

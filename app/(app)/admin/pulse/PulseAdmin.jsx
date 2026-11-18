@@ -5,16 +5,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { useApp } from "@/components/shell/AppContext";
+import { PulseQuestion } from "@/components/PulseQuestion";
 import { deleteSurvey, saveSurvey, setSurveyActive } from "@/app/actions";
 
 export const TYPES = [
-  { key: "mood", label: "Mood (5 faces)", icon: "😊" },
-  { key: "scale", label: "Rating (1–5 stars)", icon: "★" },
-  { key: "nps", label: "Recommend score (0–10)", icon: "🔟" },
-  { key: "yesno", label: "Yes / No", icon: "✓" },
-  { key: "choice", label: "Multiple choice (pick one)", icon: "◉" },
-  { key: "multi", label: "Checkboxes (pick several)", icon: "☑" },
-  { key: "text", label: "Written answer", icon: "✎" },
+  { key: "mood", label: "Mood (5 faces)", short: "Faces", preview: "😞 😐 😄", icon: "😊" },
+  { key: "scale", label: "Rating (1–5 stars)", short: "Stars", preview: "★★★★★", icon: "★" },
+  { key: "nps", label: "Score (0–10)", short: "0 – 10", preview: "0 … 10", icon: "🔟" },
+  { key: "yesno", label: "Yes / No", short: "Yes / No", preview: "✓ ✕", icon: "✓" },
+  { key: "choice", label: "Multiple choice (pick one)", short: "Pick one", preview: "◉ ○ ○", icon: "◉" },
+  { key: "multi", label: "Checkboxes (pick several)", short: "Pick many", preview: "☑ ☑ ☐", icon: "☑" },
+  { key: "text", label: "Written answer", short: "Written", preview: "✎ Aa", icon: "✎" },
 ];
 const FREQ = { once: "One-time", daily: "Every day", weekly: "Every week" };
 const STATUS = {
@@ -107,6 +108,7 @@ function Builder({ today, company, onSaved }) {
   const empty = { title: "", intro: "", frequency: "weekly", anonymous: true, startsOn: today, endsOn: addDays(today, 56), questions: [blankQ()] };
   const [f, setF] = useState(empty);
   const [busy, setBusy] = useState(false);
+  const [previews, setPreviews] = useState({});
   const setQ = (i, patch) => setF({ ...f, questions: f.questions.map((q, j) => (j === i ? { ...q, ...patch } : q)) });
   const move = (i, d) => {
     const qs = [...f.questions];
@@ -120,7 +122,11 @@ function Builder({ today, company, onSaved }) {
     const payload = {
       ...f,
       endsOn: f.endsOn || null,
-      questions: f.questions.map((q) => ({ ...q, options: q.options.map((o) => o.trim()).filter(Boolean) })),
+      questions: f.questions.map((q) => {
+        const opts = q.options.map((o) => o.trim());
+        if (["scale", "nps"].includes(q.type)) return { ...q, options: opts[0] && opts[1] ? opts.slice(0, 2) : [] };
+        return { ...q, options: opts.filter(Boolean) };
+      }),
     };
     const r = await saveSurvey(payload);
     setBusy(false);
@@ -206,19 +212,7 @@ function Builder({ today, company, onSaved }) {
             <div key={i} className="pulse-qedit">
               <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
                 <span className="pulse-q-num">{i + 1}</span>
-                <select
-                  className="field"
-                  style={{ width: "auto", flex: "0 1 260px" }}
-                  value={q.type}
-                  onChange={(e) => setQ(i, { type: e.target.value, options: ["choice", "multi"].includes(e.target.value) ? (q.options.length ? q.options : ["", ""]) : [] })}
-                  aria-label={`Question ${i + 1} type`}
-                >
-                  {TYPES.map((t) => (
-                    <option key={t.key} value={t.key}>
-                      {t.icon} {t.label}
-                    </option>
-                  ))}
-                </select>
+                <span className="caption">{TYPES.find((t) => t.key === q.type)?.label}</span>
                 <label className="caption row" style={{ gap: 6 }}>
                   <input type="checkbox" checked={q.required} onChange={(e) => setQ(i, { required: e.target.checked })} /> Required
                 </label>
@@ -238,7 +232,46 @@ function Builder({ today, company, onSaved }) {
                   <Icon name="trash" size={16} />
                 </button>
               </div>
+              <div className="pulse-typepick" role="radiogroup" aria-label={`Question ${i + 1}: answer type`}>
+                {TYPES.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={q.type === t.key}
+                    className="pulse-typetile"
+                    onClick={() =>
+                      setQ(i, { type: t.key, options: ["choice", "multi"].includes(t.key) ? (["choice", "multi"].includes(q.type) && q.options.length ? q.options : ["", ""]) : [] })
+                    }
+                  >
+                    <span className="pulse-typeicon" aria-hidden="true">
+                      {t.preview}
+                    </span>
+                    <span>{t.short}</span>
+                  </button>
+                ))}
+              </div>
               <input className="field" maxLength={200} value={q.prompt} onChange={(e) => setQ(i, { prompt: e.target.value })} placeholder="Write the question" style={{ marginTop: 8 }} />
+              {["scale", "nps"].includes(q.type) && (
+                <div className="pulse-endlabels">
+                  <input
+                    className="field"
+                    maxLength={40}
+                    value={q.options[0] ?? ""}
+                    onChange={(e) => setQ(i, { options: [e.target.value, q.options[1] ?? ""] })}
+                    placeholder={q.type === "nps" ? "Low end label (default: Not likely)" : "Low end label (default: Not at all)"}
+                    aria-label="Label for the lowest answer"
+                  />
+                  <input
+                    className="field"
+                    maxLength={40}
+                    value={q.options[1] ?? ""}
+                    onChange={(e) => setQ(i, { options: [q.options[0] ?? "", e.target.value] })}
+                    placeholder={q.type === "nps" ? "High end label (default: Very likely)" : "High end label (default: Completely)"}
+                    aria-label="Label for the highest answer"
+                  />
+                </div>
+              )}
               {["choice", "multi"].includes(q.type) && (
                 <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
                   {q.options.map((o, k) => (
@@ -266,6 +299,15 @@ function Builder({ today, company, onSaved }) {
                   )}
                 </div>
               )}
+              <details className="pulse-preview">
+                <summary>Preview what employees see</summary>
+                <PulseQuestion
+                  q={{ id: `preview-${i}`, ...q, prompt: q.prompt || "Your question", options: ["choice", "multi"].includes(q.type) ? q.options.filter((o) => o.trim()) : q.options }}
+                  index={i}
+                  value={previews[i]}
+                  onChange={(v) => setPreviews({ ...previews, [i]: v })}
+                />
+              </details>
             </div>
           ))}
           {f.questions.length < 12 && (
@@ -298,6 +340,9 @@ export function PulseAdmin({ surveys, today, company }) {
           <h1 className="large-title">Pulse Surveys</h1>
           <p>Ask everyone short questions, once or on a daily or weekly schedule, and see how satisfaction changes over time.</p>
         </div>
+        <Link href="/admin/pulse/report" className="btn btn-tinted">
+          <Icon name="chart" size={16} /> Satisfaction report
+        </Link>
       </header>
 
       <section className="group-block">

@@ -36,7 +36,7 @@ export function PulseQuestion({ q, value, onChange, index }) {
       )}
 
       {q.type === "scale" && (
-        <>
+        <div className="pulse-scale">
           <div className="pulse-row" role="radiogroup" aria-labelledby={id}>
             {[1, 2, 3, 4, 5].map((n) => (
               <button
@@ -54,14 +54,14 @@ export function PulseQuestion({ q, value, onChange, index }) {
             ))}
           </div>
           <div className="pulse-ends">
-            <span>{t("pulse.scaleLow")}</span>
-            <span>{t("pulse.scaleHigh")}</span>
+            <span dir="auto">{q.options?.[0] || t("pulse.scaleLow")}</span>
+            <span dir="auto">{q.options?.[1] || t("pulse.scaleHigh")}</span>
           </div>
-        </>
+        </div>
       )}
 
       {q.type === "nps" && (
-        <>
+        <div className="pulse-scale">
           <div className="pulse-row pulse-nps" role="radiogroup" aria-labelledby={id}>
             {Array.from({ length: 11 }, (_, n) => (
               <button key={n} type="button" role="radio" aria-checked={value === n} className="pulse-num" onClick={() => onChange(n)}>
@@ -70,10 +70,10 @@ export function PulseQuestion({ q, value, onChange, index }) {
             ))}
           </div>
           <div className="pulse-ends">
-            <span>{t("pulse.npsLow")}</span>
-            <span>{t("pulse.npsHigh")}</span>
+            <span dir="auto">{q.options?.[0] || t("pulse.npsLow")}</span>
+            <span dir="auto">{q.options?.[1] || t("pulse.npsHigh")}</span>
           </div>
-        </>
+        </div>
       )}
 
       {q.type === "yesno" && (

@@ -77,7 +77,7 @@ export function TalkRoom({ messages, canModerate }) {
   const yesterday = istDay(Date.now() - DAY);
 
   return (
-    <main className="page page-narrow talk-page">
+    <main className="page talk-page">
       <header className="page-head">
         <div>
           <h1 className="large-title">{t("talk.title")}</h1>
@@ -114,31 +114,39 @@ export function TalkRoom({ messages, canModerate }) {
                   </div>
                 )}
                 <article id={`m-${m.id}`} className="talk-msg" data-mine={m.mine || undefined} data-anon={m.anonymous || undefined}>
-                  {m.anonymous ? (
-                    <AnonAvatar />
-                  ) : (
-                    <Link href={`/people/${m.author.id}`} aria-label={m.author.name}>
-                      <Avatar name={m.author.name} size={36} />
-                    </Link>
-                  )}
-                  <div className="talk-bubble">
+                  {!m.mine &&
+                    (m.anonymous ? (
+                      <AnonAvatar />
+                    ) : (
+                      <Link href={`/people/${m.author.id}`} aria-label={m.author.name} className="talk-avatar">
+                        <Avatar name={m.author.name} size={36} />
+                      </Link>
+                    ))}
+                  <div className="talk-col">
                     <div className="talk-meta">
-                      <b>{nameOf(m)}</b>
-                      {m.mine && <span className="tag tag-accent">{m.anonymous ? t("talk.youAnon") : t("talk.you")}</span>}
-                      {!m.anonymous && m.author.title && <span className="caption">{m.author.title}</span>}
+                      {m.mine ? (
+                        <b>{m.anonymous ? t("talk.youAnon") : t("talk.you")}</b>
+                      ) : (
+                        <>
+                          <b>{nameOf(m)}</b>
+                          {!m.anonymous && m.author.title && <span className="caption">{m.author.title}</span>}
+                        </>
+                      )}
                       <time className="caption" suppressHydrationWarning>
                         · {fmt.timeAgo(m.at)}
                       </time>
                       {m.reports > 0 && <span className="tag tag-red">{t("talk.reported", { count: m.reports })}</span>}
                     </div>
-                    {parent && (
-                      <a href={`#m-${parent.id}`} className="talk-quote">
-                        <b>{nameOf(parent)}</b> <span dir="auto">{parent.body.slice(0, 120)}</span>
-                      </a>
-                    )}
-                    <p className="talk-body" dir="auto">
-                      {m.body}
-                    </p>
+                    <div className="talk-bubble">
+                      {parent && (
+                        <a href={`#m-${parent.id}`} className="talk-quote">
+                          <b>{nameOf(parent)}</b> <span dir="auto">{parent.body.slice(0, 120)}</span>
+                        </a>
+                      )}
+                      <p className="talk-body" dir="auto">
+                        {m.body}
+                      </p>
+                    </div>
                     <div className="talk-actions">
                       <button className="btn btn-plain btn-sm" onClick={() => setReplyTo(m)}>
                         {t("talk.reply")}
