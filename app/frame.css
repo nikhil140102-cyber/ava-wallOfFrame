@@ -400,3 +400,32 @@ body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* ── Desktop: the frame always fits the window ───────────────
+   The page scrolls inside the frame, so there's an even gap on every side
+   (including the bottom) and the frame's corners are always visible. */
+@media (min-width: 901px) {
+  .shell {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .main {
+    height: calc(100dvh - var(--canvas-gap) * 2);
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--fill) transparent;
+  }
+  .main::-webkit-scrollbar {
+    width: 10px;
+  }
+  .main::-webkit-scrollbar-thumb {
+    background: var(--fill);
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+}
