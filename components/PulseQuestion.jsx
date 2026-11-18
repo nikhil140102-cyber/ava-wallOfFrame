@@ -9,7 +9,7 @@ export function PulseQuestion({ q, value, onChange, index }) {
   const { t } = useI18n();
   const id = `q-${q.id}`;
   return (
-    <fieldset className="pulse-q">
+    <fieldset className="pulse-q" data-type={q.type}>
       <legend id={id}>
         <span className="pulse-q-num">{index + 1}</span>
         <span dir="auto">{q.prompt}</span>

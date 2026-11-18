@@ -73,7 +73,7 @@ export function PulseList({ surveys }) {
   const { t } = useI18n();
   const router = useRouter();
   return (
-    <main className="page page-narrow">
+    <main className="page pulse-wide">
       <header className="page-head">
         <div>
           <h1 className="large-title">{t("pulse.title")}</h1>
