@@ -23,6 +23,7 @@ import {
 import { getGivenThisMonth, getPoints, getSettings } from "@/lib/queries";
 import { isPermission, SUPER_ADMIN_ONLY } from "@/lib/permissions";
 import { isLocale } from "@/lib/i18n/locales";
+import { QUESTION_TYPES, isOpen, istToday, periodFor } from "@/lib/pulse";
 import { grantWelcome, runDailyAutoPoints } from "@/lib/autopoints";
 import { attachImages, attachMemoryImage, MAX_PER_POST, removeImagesFor, removeUpload, saveUpload } from "@/lib/uploads";
 
@@ -281,6 +282,238 @@ export async function deleteAnnouncement(id) {
     if (!row) throw new Error("That announcement no longer exists.");
     await db.delete(s.announcements).where(eq(s.announcements.id, row.id));
     await audit(actor.id, "Deleted an announcement", row.text.slice(0, 80));
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ---------------------------------------------------------------- Open Talk (everyone)
+
+export async function postTalk(input) {
+  try {
+    const user = await me();
+    const d = z
+      .object({
+        body: z.string().trim().min(1, "Write something first.").max(1000, "Keep it under 1,000 characters."),
+        anonymous: z.boolean().default(false),
+        replyToId: z.string().max(64).nullish(),
+      })
+      .parse(input);
+    // Simple flood guard: at most 10 messages a minute per person.
+    const recent = await db
+      .select({ n: sql`count(*)` })
+      .from(s.talkMessages)
+      .where(and(eq(s.talkMessages.authorId, user.id), gte(s.talkMessages.createdAt, new Date(Date.now() - 60_000))))
+      .get();
+    if (Number(recent?.n ?? 0) >= 10) throw new Error("You're posting very fast — wait a minute and try again.");
+    let replyToId = null;
+    if (d.replyToId) {
+      const parent = await db.select({ id: s.talkMessages.id }).from(s.talkMessages).where(eq(s.talkMessages.id, d.replyToId)).get();
+      replyToId = parent?.id ?? null;
+    }
+    await db.insert(s.talkMessages).values({ authorId: user.id, anonymous: d.anonymous, body: d.body, replyToId });
+    revalidatePath("/talk");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteTalk(id) {
+  try {
+    const user = await me();
+    const msg = await db.select().from(s.talkMessages).where(eq(s.talkMessages.id, String(id))).get();
+    if (!msg) throw new Error("That message no longer exists.");
+    if (msg.authorId !== user.id && !user.can("moderation.manage")) throw new Error("You can only delete your own messages.");
+    await db.update(s.talkMessages).set({ replyToId: null }).where(eq(s.talkMessages.replyToId, msg.id));
+    await db.delete(s.talkMessages).where(eq(s.talkMessages.id, msg.id));
+    // The audit log never records who wrote an anonymous message.
+    if (msg.authorId !== user.id) await audit(user.id, "Removed an Open Talk message", msg.body.slice(0, 60));
+    revalidatePath("/talk");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function reportTalk(id) {
+  try {
+    await me();
+    const msg = await db.select().from(s.talkMessages).where(eq(s.talkMessages.id, String(id))).get();
+    if (!msg) throw new Error("That message no longer exists.");
+    await db
+      .update(s.talkMessages)
+      .set({ reports: sql`${s.talkMessages.reports} + 1` })
+      .where(eq(s.talkMessages.id, msg.id));
+    await notify(await usersWith("moderation.manage"), {
+      kind: "system",
+      title: "An Open Talk message was reported",
+      link: `/talk#m-${msg.id}`,
+    });
+    return { ok: true, message: "Thanks — HR will take a look." };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ---------------------------------------------------------------- Pulse surveys
+
+const questionSchema = z
+  .object({
+    type: z.enum(QUESTION_TYPES),
+    prompt: z.string().trim().min(3, "Every question needs some text.").max(200),
+    options: z.array(z.string().trim().min(1).max(60)).max(8).default([]),
+    required: z.boolean().default(true),
+  })
+  .refine((q) => !["choice", "multi"].includes(q.type) || q.options.length >= 2, {
+    message: "Multiple-choice questions need at least 2 options.",
+  });
+
+const surveySchema = z
+  .object({
+    title: z.string().trim().min(3, "Give the survey a title.").max(80),
+    intro: z.string().trim().max(300).default(""),
+    anonymous: z.boolean().default(true),
+    frequency: z.enum(["once", "daily", "weekly"]),
+    startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a start date."),
+    endsOn: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullish()
+      .or(z.literal("")),
+    questions: z.array(questionSchema).min(1, "Add at least one question.").max(12, "Keep it to 12 questions or fewer."),
+  })
+  .refine((d) => !d.endsOn || d.endsOn >= d.startsOn, { message: "The end date is before the start date." });
+
+export async function saveSurvey(input) {
+  try {
+    const actor = await assertPermission("surveys.manage");
+    const d = surveySchema.parse(input);
+    const id = crypto.randomUUID();
+    await db.insert(s.surveys).values({
+      id,
+      title: d.title,
+      intro: d.intro,
+      anonymous: d.anonymous,
+      frequency: d.frequency,
+      startsOn: d.startsOn,
+      endsOn: d.endsOn || null,
+      createdBy: actor.id,
+    });
+    await db.insert(s.surveyQuestions).values(
+      d.questions.map((q, i) => ({
+        surveyId: id,
+        position: i,
+        type: q.type,
+        prompt: q.prompt,
+        options: ["choice", "multi"].includes(q.type) ? q.options : [],
+        required: q.required,
+      }))
+    );
+    await audit(actor.id, "Created pulse survey", d.title);
+    if (d.startsOn <= istToday()) {
+      const everyone = await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.active, true));
+      await notify(
+        everyone.map((u) => u.id),
+        { kind: "system", title: `New pulse survey: ${d.title}`, link: "/pulse" }
+      );
+    }
+    revalidatePath("/", "layout");
+    return { ok: true, id };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function setSurveyActive(id, active) {
+  try {
+    const actor = await assertPermission("surveys.manage");
+    const sv = await db.select().from(s.surveys).where(eq(s.surveys.id, String(id))).get();
+    if (!sv) throw new Error("Survey not found.");
+    await db.update(s.surveys).set({ active: Boolean(active) }).where(eq(s.surveys.id, sv.id));
+    await audit(actor.id, active ? "Resumed pulse survey" : "Paused pulse survey", sv.title);
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteSurvey(id) {
+  try {
+    const actor = await assertPermission("surveys.manage");
+    const sv = await db.select().from(s.surveys).where(eq(s.surveys.id, String(id))).get();
+    if (!sv) throw new Error("Survey not found.");
+    const responses = await db.select({ id: s.surveyResponses.id }).from(s.surveyResponses).where(eq(s.surveyResponses.surveyId, sv.id));
+    if (responses.length)
+      await db.delete(s.surveyAnswers).where(
+        inArray(
+          s.surveyAnswers.responseId,
+          responses.map((r) => r.id)
+        )
+      );
+    await db.delete(s.surveyResponses).where(eq(s.surveyResponses.surveyId, sv.id));
+    await db.delete(s.surveyQuestions).where(eq(s.surveyQuestions.surveyId, sv.id));
+    await db.delete(s.surveys).where(eq(s.surveys.id, sv.id));
+    await audit(actor.id, "Deleted pulse survey", sv.title);
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function submitSurvey(surveyId, answers) {
+  try {
+    const user = await me();
+    const sv = await db.select().from(s.surveys).where(eq(s.surveys.id, String(surveyId))).get();
+    if (!sv || !isOpen(sv)) throw new Error("This survey is closed.");
+    const period = periodFor(sv.frequency);
+    const already = await db
+      .select({ id: s.surveyResponses.id })
+      .from(s.surveyResponses)
+      .where(and(eq(s.surveyResponses.surveyId, sv.id), eq(s.surveyResponses.userId, user.id), eq(s.surveyResponses.period, period)))
+      .get();
+    if (already) throw new Error("You've already answered this one — thank you!");
+    const questions = await db.select().from(s.surveyQuestions).where(eq(s.surveyQuestions.surveyId, sv.id));
+    const given = answers && typeof answers === "object" ? answers : {};
+    const rows = [];
+    for (const q of questions) {
+      const raw = given[q.id];
+      const empty = raw === undefined || raw === null || raw === "" || (Array.isArray(raw) && raw.length === 0);
+      if (empty) {
+        if (q.required) throw new Error(`Please answer: “${q.prompt}”`);
+        continue;
+      }
+      let value;
+      if (q.type === "scale" || q.type === "mood") {
+        const n = Number(raw);
+        if (!Number.isInteger(n) || n < 1 || n > 5) throw new Error("Pick a value from 1 to 5.");
+        value = String(n);
+      } else if (q.type === "nps") {
+        const n = Number(raw);
+        if (!Number.isInteger(n) || n < 0 || n > 10) throw new Error("Pick a value from 0 to 10.");
+        value = String(n);
+      } else if (q.type === "yesno") {
+        if (raw !== "yes" && raw !== "no") throw new Error("Answer yes or no.");
+        value = raw;
+      } else if (q.type === "choice") {
+        if (!(q.options ?? []).includes(raw)) throw new Error("Pick one of the options.");
+        value = raw;
+      } else if (q.type === "multi") {
+        const picked = [...new Set([].concat(raw))].filter((o) => (q.options ?? []).includes(o));
+        if (!picked.length) throw new Error("Pick at least one option.");
+        value = JSON.stringify(picked);
+      } else {
+        value = z.string().trim().min(1).max(1000, "Keep written answers under 1,000 characters.").parse(String(raw));
+      }
+      rows.push({ questionId: q.id, value });
+    }
+    const responseId = crypto.randomUUID();
+    await db.insert(s.surveyResponses).values({ id: responseId, surveyId: sv.id, userId: user.id, period });
+    if (rows.length) await db.insert(s.surveyAnswers).values(rows.map((r) => ({ ...r, responseId })));
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {

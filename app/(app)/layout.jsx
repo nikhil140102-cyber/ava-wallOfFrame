@@ -14,6 +14,7 @@ import {
 import { AppShell } from "@/components/shell/AppShell";
 import { runDailyAutoPoints } from "@/lib/autopoints";
 import { sendMemoryReminders } from "@/lib/memories";
+import { openSurveysFor } from "@/lib/pulse";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function AppLayout({ children }) {
   await runDailyAutoPoints();
   // “On this day” memory reminders (once a day for everyone).
   await sendMemoryReminders();
-  const [settings, levels, points, used, unread, people, values, badges, announcements] = await Promise.all([
+  const [settings, levels, points, used, unread, people, values, badges, announcements, openSurveys] = await Promise.all([
     getSettings(),
     getLevels(),
     getPoints([user.id]),
@@ -40,6 +41,7 @@ export default async function AppLayout({ children }) {
       .where(eq(s.badges.active, true))
       .orderBy(s.badges.category, s.badges.name),
     getActiveAnnouncements(),
+    openSurveysFor(user.id),
   ]);
   const pts = points.get(user.id);
   const lvl = levelFor(pts.lifetime, levels);
@@ -96,6 +98,7 @@ export default async function AppLayout({ children }) {
     values,
     badges,
     announcements,
+    openSurveys: openSurveys.length,
   };
 
   return <AppShell data={data}>{children}</AppShell>;

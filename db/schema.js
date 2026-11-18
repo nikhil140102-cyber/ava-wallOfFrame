@@ -336,3 +336,89 @@ export const announcements = sqliteTable("announcements", {
   createdBy: text("created_by").references(() => users.id),
   createdAt: createdAt(),
 });
+
+/* ── Open Talk: company-wide chat ─────────────────────────────────────────
+   authorId is always stored (so people can delete their own messages and abuse can be stopped),
+   but for anonymous messages it is NEVER sent to the browser or shown to anyone in the app. */
+export const talkMessages = sqliteTable(
+  "talk_messages",
+  {
+    id: id(),
+    authorId: text("author_id")
+      .notNull()
+      .references(() => users.id),
+    anonymous: integer("anonymous", { mode: "boolean" }).notNull().default(false),
+    body: text("body").notNull(),
+    replyToId: text("reply_to_id"),
+    reports: integer("reports").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("talk_created_idx").on(t.createdAt)]
+);
+
+/* ── Pulse surveys (HR) ─────────────────────────────────────────────────── */
+export const surveys = sqliteTable("surveys", {
+  id: id(),
+  title: text("title").notNull(),
+  intro: text("intro").notNull().default(""),
+  /** Anonymous: HR sees only totals, never who answered what. */
+  anonymous: integer("anonymous", { mode: "boolean" }).notNull().default(true),
+  /** once = answer one time; daily = once a day; weekly = once a week (Mon–Sun). */
+  frequency: text("frequency", { enum: ["once", "daily", "weekly"] }).notNull().default("once"),
+  /** "YYYY-MM-DD", India time. */
+  startsOn: text("starts_on").notNull(),
+  endsOn: text("ends_on"),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdBy: text("created_by").references(() => users.id),
+  createdAt: createdAt(),
+});
+
+export const surveyQuestions = sqliteTable("survey_questions", {
+  id: id(),
+  surveyId: text("survey_id")
+    .notNull()
+    .references(() => surveys.id),
+  position: integer("position").notNull().default(0),
+  /** scale = 1–5 stars · mood = 5 faces · nps = 0–10 · choice = pick one · multi = pick several · yesno · text */
+  type: text("type", { enum: ["scale", "mood", "nps", "choice", "multi", "yesno", "text"] }).notNull(),
+  prompt: text("prompt").notNull(),
+  options: text("options", { mode: "json" })
+    .$type()
+    .notNull()
+    .default(sql`'[]'`),
+  required: integer("required", { mode: "boolean" }).notNull().default(true),
+});
+
+export const surveyResponses = sqliteTable(
+  "survey_responses",
+  {
+    id: id(),
+    surveyId: text("survey_id")
+      .notNull()
+      .references(() => surveys.id),
+    /** Kept only to stop people answering twice in the same period; never shown for anonymous surveys. */
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    /** "once", "2026-11-18" (daily) or "2026-11-16" (weekly: the Monday of that week). */
+    period: text("period").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("survey_resp_idx").on(t.surveyId, t.period, t.userId)]
+);
+
+export const surveyAnswers = sqliteTable(
+  "survey_answers",
+  {
+    id: id(),
+    responseId: text("response_id")
+      .notNull()
+      .references(() => surveyResponses.id),
+    questionId: text("question_id")
+      .notNull()
+      .references(() => surveyQuestions.id),
+    /** Number as text for scale/mood/nps, option text for choice/yesno, JSON array for multi, free text for text. */
+    value: text("value").notNull(),
+  },
+  (t) => [index("survey_ans_q_idx").on(t.questionId)]
+);

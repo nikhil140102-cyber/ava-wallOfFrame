@@ -64,6 +64,58 @@ if (resetTo && people > 0) {
   console.log("  Each person chooses their own password right after signing in.");
   console.log("  ⚠ Now DELETE RESET_PASSWORDS_TO in Vercel → Settings → Environment Variables.");
 }
+// One-time: give the new "Run pulse surveys" permission to roles that already manage people (HR Admin).
+// Recorded in settings so it never runs again — if you later remove it from a role, it stays removed.
+if (people > 0) {
+  const done = await client.execute("select value from settings where key = 'grant_surveys_manage'");
+  if (!done.rows.length) {
+    const roles = await client.execute("select id, name, permissions from roles");
+    let granted = 0;
+    for (const r of roles.rows) {
+      const perms = JSON.parse(String(r.permissions || "[]"));
+      if (perms.includes("users.manage") && !perms.includes("surveys.manage")) {
+        perms.push("surveys.manage");
+        await client.execute({ sql: "update roles set permissions = ? where id = ?", args: [JSON.stringify(perms), r.id] });
+        granted++;
+      }
+    }
+    await client.execute("insert into settings (key, value) values ('grant_surveys_manage', 'done')");
+    console.log(`→ Gave "Run pulse surveys" to ${granted} role(s) that manage people (e.g. HR Admin).`);
+  }
+}
+// One-time: switch the recognition categories (the "Pick a category" chips) to the new list.
+// Old ones are switched off, not deleted, so past posts keep their tag. Runs once only.
+if (people > 0) {
+  const done = await client.execute("select value from settings where key = 'categories_v2'");
+  if (!done.rows.length) {
+    const NEW = [
+      ["Client Appreciation", "Praise from a client, or great work for one"],
+      ["Internal Appreciation", "Thanks for help from someone inside the company"],
+      ["Learning", "Learned something new, or helped someone else learn"],
+      ["First", "A first: first project, first win, first time doing something"],
+      ["Memory", "A moment worth remembering"],
+      ["Badge", "Earned or deserves a badge"],
+      ["Anniversary", "Work anniversaries and long-service milestones"],
+      ["General", "Anything else worth celebrating"],
+    ];
+    const names = NEW.map(([n]) => n.toLowerCase());
+    const existing = (await client.execute("select id, name from company_values")).rows;
+    for (const v of existing)
+      if (!names.includes(String(v.name).toLowerCase()))
+        await client.execute({ sql: "update company_values set active = 0 where id = ?", args: [v.id] });
+    for (const [name, description] of NEW) {
+      const hit = existing.find((v) => String(v.name).toLowerCase() === name.toLowerCase());
+      if (hit) await client.execute({ sql: "update company_values set active = 1, description = ? where id = ?", args: [description, hit.id] });
+      else
+        await client.execute({
+          sql: "insert into company_values (id, name, description, active) values (?, ?, ?, 1)",
+          args: [crypto.randomUUID(), name, description],
+        });
+    }
+    await client.execute("insert into settings (key, value) values ('categories_v2', 'done')");
+    console.log("→ Recognition categories updated: " + NEW.map(([n]) => n).join(", "));
+  }
+}
 client.close();
 
 if (people === 0 && process.env.SEED_DEMO_DATA !== "false") {

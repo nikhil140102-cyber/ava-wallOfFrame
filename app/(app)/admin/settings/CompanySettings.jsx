@@ -102,7 +102,7 @@ export function CompanySettings({ settings, values }) {
       </section>
 
       <section className="group-block">
-        <div className="section-label">Company values</div>
+        <div className="section-label">Recognition categories</div>
         <div className="group">
           {values.map((v) => (
             <div key={v.id} className="group-item" style={{ opacity: v.active ? 1 : 0.55 }}>
@@ -130,7 +130,7 @@ export function CompanySettings({ settings, values }) {
             <Icon name="plus" size={16} style={{ color: "var(--accent)" }} />
             <input
               className="inline-input"
-              placeholder="New value"
+              placeholder="New category"
               value={newValue.name}
               onChange={(e) => setNewValue({ ...newValue, name: e.target.value })}
               style={{ maxWidth: 180 }}
@@ -148,14 +148,14 @@ export function CompanySettings({ settings, values }) {
                 const r = await saveValue({ ...newValue, active: true });
                 if (!r.ok) return toast(r.error, { tone: "error" });
                 setNewValue({ name: "", description: "" });
-                toast("Value added");
+                toast("Category added");
               }}
             >
               Add
             </button>
           </div>
         </div>
-        <p className="group-footer">Switching a value off keeps it on past posts but removes it from the Recognize sheet.</p>
+        <p className="group-footer">These are the chips people pick in step 2 of Recognize. Switching one off keeps it on past posts but removes it from the Recognize sheet.</p>
       </section>
     </main>
   );

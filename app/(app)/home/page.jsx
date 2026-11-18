@@ -10,6 +10,7 @@ import { RecognizeButton } from "@/components/RecognizeButton";
 import { GettingStarted } from "@/components/GettingStarted";
 import { NeedsYou } from "@/components/NeedsYou";
 import { MyBadgesCard } from "@/components/MyBadgesCard";
+import { PulseCard } from "@/components/PulseCard";
 import { PageHelp } from "@/components/PageHelp";
 import { and, eq, sql } from "drizzle-orm";
 import { db, schema as s } from "@/db";
@@ -180,6 +181,7 @@ export default async function HomePage({ searchParams }) {
         {/* The right column scrolls with the page: it is taller than most screens, and a sticky column
             would hide its lower cards until the end of the feed. */}
         <aside className="stack">
+          <PulseCard userId={user.id} />
           <NeedsYou tasks={tasks} />
           <GettingStarted steps={steps} />
           <LevelCard />

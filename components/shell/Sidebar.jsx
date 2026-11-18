@@ -34,6 +34,8 @@ export function Sidebar({ open, onClose }) {
     { href: "/rewards", label: t("nav.rewards"), icon: "gift" },
     { href: "/leaderboard", label: t("nav.leaderboard"), icon: "trophy" },
     { href: "/wall", label: t("nav.wall"), icon: "image" },
+    { href: "/talk", label: t("nav.talk"), icon: "chat" },
+    { href: "/pulse", label: t("nav.pulse"), icon: "heart", count: data.openSurveys },
   ];
   const team = [{ href: "/team", label: t("nav.team"), icon: "users", perm: "team.view" }];
   const admin = [
@@ -45,6 +47,7 @@ export function Sidebar({ open, onClose }) {
     { href: "/admin/rewards", label: t("nav.adminRewards"), icon: "gift", perm: "rewards.manage", count: data.pendingRedemptions },
     { href: "/admin/moderation", label: t("nav.adminModeration"), icon: "flag", perm: "moderation.manage", count: data.openReports },
     { href: "/admin/announcements", label: t("nav.adminAnnouncements"), icon: "megaphone", perm: "feed.announce" },
+    { href: "/admin/pulse", label: t("nav.adminPulse"), icon: "chart", perm: "surveys.manage" },
     { href: "/admin/points", label: t("nav.adminPoints"), icon: "sparkles", perm: "points.manage" },
     { href: "/admin/settings", label: t("nav.adminSettings"), icon: "building", perm: "settings.manage" },
     { href: "/admin/audit", label: t("nav.adminAudit"), icon: "list", perm: "audit.view" },

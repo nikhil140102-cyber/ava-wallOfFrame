@@ -2,6 +2,7 @@
    Run with `npm run setup` (creates tables and seeds) or `npm run db:seed` (re-seed only). */
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import fs from "node:fs";
 import path from "node:path";
@@ -23,6 +24,11 @@ const uid = () => crypto.randomUUID();
 async function main() {
   // Clear in dependency order so the seed can be re-run.
   for (const t of [
+    s.surveyAnswers,
+    s.surveyResponses,
+    s.surveyQuestions,
+    s.surveys,
+    s.talkMessages,
     s.announcements,
     s.securityEvents,
     s.memories,
@@ -92,6 +98,7 @@ async function main() {
         "recognition.give",
         "feed.comment",
         "feed.announce",
+        "surveys.manage",
         "rewards.redeem",
         "team.view",
         "badges.award",
@@ -132,12 +139,23 @@ async function main() {
 
   // ---------- Values ----------
   const valueNames = [
-    ["Teamwork", "Lifting each other up and sharing the load"],
-    ["Ownership", "Seeing things through, end to end"],
-    ["Customer first", "Starting from what the customer needs"],
-    ["Innovation", "Trying a better way"],
-    ["Going extra mile", "Effort beyond what was asked"],
+    ["Client Appreciation", "Praise from a client, or great work for one"],
+    ["Internal Appreciation", "Thanks for help from someone inside the company"],
+    ["Learning", "Learned something new, or helped someone else learn"],
+    ["First", "A first: first project, first win, first time doing something"],
+    ["Memory", "A moment worth remembering"],
+    ["Badge", "Earned or deserves a badge"],
+    ["Anniversary", "Work anniversaries and long-service milestones"],
+    ["General", "Anything else worth celebrating"],
   ];
+  // Demo posts were written with the older value names; show them under the nearest category.
+  const OLD_VALUE = {
+    Teamwork: "Internal Appreciation",
+    Ownership: "Internal Appreciation",
+    "Customer first": "Client Appreciation",
+    Innovation: "Learning",
+    "Going extra mile": "General",
+  };
   const val = {};
   for (const [name, description] of valueNames) {
     val[name] = uid();
@@ -448,7 +466,7 @@ async function main() {
       authorId: u[from],
       kind: "appreciation",
       body,
-      valueId: val[value],
+      valueId: val[OLD_VALUE[value] ?? value],
       badgeId: opts.badge ? badge[opts.badge] : null,
       pointsEach: points,
       createdAt: at,
@@ -860,6 +878,111 @@ async function main() {
     note: "Welcome bonus",
     createdAt: ago(20),
   });
+  // ---------- Open Talk demo ----------
+  const talk = [
+    ["syed", false, "Morning all! Anyone up for a quick design crit at 4 today? Bring anything you're stuck on.", 2, 5],
+    ["meera", false, "I'm in. I'll bring the onboarding flow.", 2, 4],
+    ["dev", true, "Honest question: could we have fewer meetings on Fridays? Afternoons are when I get real work done.", 1, 6],
+    ["nisha", false, "+1 to quieter Fridays. Maybe try a no-meeting Friday afternoon for a month?", 1, 5],
+    ["priya", false, "Good idea, noted. We'll try no-meeting Friday afternoons for the next 4 weeks and ask how it went.", 1, 3],
+    ["riya", true, "The new coffee machine is a big upgrade. Thank you to whoever sorted that!", 0, 4],
+    ["arjun", false, "Thanks for the warm welcome, everyone. Still finding my way around the infra docs!", 0, 2],
+  ];
+  const talkIds = [];
+  for (const [who, anonymous, body, d, h] of talk) {
+    const id = uid();
+    talkIds.push(id);
+    await db.insert(s.talkMessages).values({ id, authorId: u[who], anonymous, body, createdAt: ago(d, h) });
+  }
+  await db.update(s.talkMessages).set({ replyToId: talkIds[0] }).where(eq(s.talkMessages.id, talkIds[1]));
+  await db.update(s.talkMessages).set({ replyToId: talkIds[2] }).where(eq(s.talkMessages.id, talkIds[3]));
+
+  // ---------- Pulse surveys demo ----------
+  const istDay = (ms) => new Date(ms + 330 * 60_000).toISOString().slice(0, 10);
+  const monday = (day) => {
+    const dt = new Date(`${day}T00:00:00Z`);
+    dt.setUTCDate(dt.getUTCDate() - ((dt.getUTCDay() + 6) % 7));
+    return dt.toISOString().slice(0, 10);
+  };
+  const today = istDay(Date.now());
+  const weekly = uid();
+  await db.insert(s.surveys).values({
+    id: weekly,
+    title: "Weekly happiness check",
+    intro: "Two minutes to tell us how this week felt. Answers are anonymous.",
+    anonymous: true,
+    frequency: "weekly",
+    startsOn: istDay(Date.now() - 25 * DAY),
+    endsOn: istDay(Date.now() + 60 * DAY),
+    createdBy: u["priya"],
+    createdAt: ago(25),
+  });
+  const wq = { mood: uid(), load: uid(), text: uid() };
+  await db.insert(s.surveyQuestions).values([
+    { id: wq.mood, surveyId: weekly, position: 0, type: "mood", prompt: "How did you feel at work this week?" },
+    { id: wq.load, surveyId: weekly, position: 1, type: "scale", prompt: "How manageable was your workload?" },
+    { id: wq.text, surveyId: weekly, position: 2, type: "text", prompt: "Anything we could do better?", required: false },
+  ]);
+  const crowd = ["syed", "apurva", "meera", "sara", "riya", "dev", "nisha", "arjun", "nitin", "james", "amit"];
+  const weeks = [
+    { back: 21, mood: [3, 4, 3, 2, 4, 3, 4, 3, 3], load: [2, 3, 3, 2, 3, 2, 3, 3, 2] },
+    { back: 14, mood: [4, 4, 3, 3, 4, 4, 5, 3, 4, 3], load: [3, 3, 4, 3, 3, 2, 4, 3, 3, 3] },
+    { back: 7, mood: [4, 5, 4, 4, 3, 4, 5, 4, 4, 5, 4], load: [3, 4, 4, 3, 3, 4, 4, 3, 4, 4, 3] },
+  ];
+  const notes = [
+    "Fewer last-minute deadlines please",
+    "Loved the team lunch!",
+    "The Friday afternoon no-meeting trial is great",
+    "More clarity on priorities would help",
+  ];
+  for (const w of weeks) {
+    const period = monday(istDay(Date.now() - w.back * DAY));
+    for (let i = 0; i < w.mood.length; i++) {
+      const rid = uid();
+      await db.insert(s.surveyResponses).values({ id: rid, surveyId: weekly, userId: u[crowd[i]], period, createdAt: ago(w.back - 1, i) });
+      const rows = [
+        { responseId: rid, questionId: wq.mood, value: String(w.mood[i]) },
+        { responseId: rid, questionId: wq.load, value: String(w.load[i]) },
+      ];
+      if (i % 3 === 0) rows.push({ responseId: rid, questionId: wq.text, value: notes[(i / 3 + w.back) % notes.length] });
+      await db.insert(s.surveyAnswers).values(rows);
+    }
+  }
+  const enps = uid();
+  await db.insert(s.surveys).values({
+    id: enps,
+    title: "Would you recommend us?",
+    intro: "Our quarterly employee Net Promoter Score.",
+    anonymous: true,
+    frequency: "once",
+    startsOn: istDay(Date.now() - 5 * DAY),
+    endsOn: istDay(Date.now() + 9 * DAY),
+    createdBy: u["priya"],
+    createdAt: ago(5),
+  });
+  const eq1 = uid();
+  const eq2 = uid();
+  await db.insert(s.surveyQuestions).values([
+    { id: eq1, surveyId: enps, position: 0, type: "nps", prompt: "How likely are you to recommend AvadheshCo as a place to work?" },
+    { id: eq2, surveyId: enps, position: 1, type: "text", prompt: "What is the main reason for your score?", required: false },
+  ]);
+  const npsAnswers = [
+    ["syed", 9, "Great team and real ownership"],
+    ["apurva", 10, null],
+    ["meera", 8, "Good place, could grow faster"],
+    ["dev", 6, "Too many meetings"],
+    ["nisha", 9, null],
+    ["james", 7, null],
+  ];
+  for (const [who, score, why] of npsAnswers) {
+    const rid = uid();
+    await db.insert(s.surveyResponses).values({ id: rid, surveyId: enps, userId: u[who], period: "once", createdAt: ago(4) });
+    await db.insert(s.surveyAnswers).values([
+      { responseId: rid, questionId: eq1, value: String(score) },
+      ...(why ? [{ responseId: rid, questionId: eq2, value: why }] : []),
+    ]);
+  }
+
   // Announcement bar demo (posted by HR and the Super Admin).
   await db.insert(s.announcements).values([
     {
