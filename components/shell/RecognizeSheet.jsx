@@ -18,6 +18,7 @@ export function RecognizeSheet() {
   const [query, setQuery] = useState("");
   const [valueId, setValueId] = useState(null);
   const [badgeId, setBadgeId] = useState(null);
+  const [badgeSearch, setBadgeSearch] = useState(null); // null = closed, string = searching by name
   const [body, setBody] = useState("");
   const [error, setError] = useState(null);
   const [photos, setPhotos] = useState([]);
@@ -34,6 +35,7 @@ export function RecognizeSheet() {
     setQuery("");
     setValueId(null);
     setBadgeId(null);
+    setBadgeSearch(null);
     setBody("");
     setPhotos([]);
     setDragging(false);
@@ -278,21 +280,79 @@ export function RecognizeSheet() {
                 {t("recognize.badge.optional")}
               </span>
             </span>
-            <div className="rec-badges">
-              {badges.map((b) => (
+            {(() => {
+              // Show 3 badges (the chosen one first) and a 4th tile to find any badge by name.
+              const tile = (b) => (
                 <button
                   key={b.id}
                   className="rec-badge"
                   aria-pressed={badgeId === b.id}
-                  onClick={() => setBadgeId(badgeId === b.id ? null : b.id)}
+                  onClick={() => {
+                    setBadgeId(badgeId === b.id ? null : b.id);
+                    setBadgeSearch(null);
+                  }}
                 >
                   <span style={{ background: `color-mix(in srgb, ${b.color} 14%, transparent)`, color: b.color }}>
                     <Icon name={b.icon} size={18} />
                   </span>
                   {b.name}
                 </button>
-              ))}
-            </div>
+              );
+              if (badgeSearch !== null) {
+                const q = badgeSearch.trim().toLowerCase();
+                const found = badges.filter((b) => !q || b.name.toLowerCase().includes(q));
+                return (
+                  <div className="rec-badge-search">
+                    <div className="rec-badge-search-bar">
+                      <Icon name="search" size={16} />
+                      <input
+                        autoFocus
+                        value={badgeSearch}
+                        onChange={(e) => setBadgeSearch(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            e.stopPropagation();
+                            setBadgeSearch(null);
+                          }
+                          if (e.key === "Enter" && found.length) {
+                            e.preventDefault();
+                            setBadgeId(found[0].id);
+                            setBadgeSearch(null);
+                          }
+                        }}
+                        placeholder={t("recognize.badge.searchPlaceholder")}
+                        aria-label={t("recognize.badge.searchPlaceholder")}
+                      />
+                      <button type="button" className="icon-btn" onClick={() => setBadgeSearch(null)} aria-label={t("recognize.badge.close")}>
+                        <Icon name="x" size={14} />
+                      </button>
+                    </div>
+                    {found.length ? (
+                      <div className="rec-badges rec-badges-results">{found.map(tile)}</div>
+                    ) : (
+                      <p className="caption" style={{ padding: "6px 2px" }}>
+                        {t("recognize.badge.noMatch", { q: badgeSearch.trim() })}
+                      </p>
+                    )}
+                  </div>
+                );
+              }
+              const chosen = badges.find((b) => b.id === badgeId);
+              const shown = [...(chosen ? [chosen] : []), ...badges.filter((b) => b.id !== badgeId)].slice(0, 3);
+              return (
+                <div className="rec-badges rec-badges-short">
+                  {shown.map(tile)}
+                  {badges.length > 3 && (
+                    <button type="button" className="rec-badge rec-badge-find" onClick={() => setBadgeSearch("")}>
+                      <span>
+                        <Icon name="search" size={18} />
+                      </span>
+                      {t("recognize.badge.find", { count: badges.length })}
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </section>
 
           {points > 0 && (

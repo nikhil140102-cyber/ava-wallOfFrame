@@ -425,6 +425,59 @@
   align-items: center;
   justify-content: center;
 }
+.rec-badges-short {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.rec-badge-find {
+  border: 2px dashed var(--separator);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+}
+.rec-badge-find:hover {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.rec-badge-find span {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.rec-badge-search {
+  display: grid;
+  gap: 10px;
+}
+.rec-badge-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 6px 0 12px;
+  border-radius: 12px;
+  background: var(--fill-2);
+  border: 1.5px solid var(--accent);
+  color: var(--label-3);
+}
+.rec-badge-search-bar input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--label);
+  font: inherit;
+  font-size: 14.5px;
+}
+.rec-badges-results {
+  max-height: 248px;
+  overflow-y: auto;
+  padding: 2px;
+}
+@media (max-width: 480px) {
+  .rec-badges-short {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .rec-badge[aria-pressed="true"] {
   border-color: var(--accent);
   background: var(--accent-tint);
